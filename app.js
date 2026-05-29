@@ -12,29 +12,58 @@ let serverMasterData = {};
 const btnDeparture = document.getElementById('btn-departure');
 const btnArrival = document.getElementById('btn-arrival');
 const btnSave = document.getElementById('btn-save');
-const btnPrint = document.getElementById('btn-print'); // 💡印刷ボタン
+const btnPrint = document.getElementById('btn-print');
 const statusMessage = document.getElementById('status-message');
 
+const driverInput = document.getElementById('driver');
+const driverList = document.getElementById('driver-list');
+const carInput = document.getElementById('car-number');
+const carList = document.getElementById('car-list');
 const companyInput = document.getElementById('company');
-const shopInput = document.getElementById('shop');
 const companyList = document.getElementById('company-list');
+const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
+// --- 🔴 ここにご自身のGASのWebアプリURLを貼り付けてください ---
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwKBITZn5JomjaNMzLSnjHwBIE1qCeKPY7GnPl9dqohwjNUtDh6v5IDlfkG9f5_S7e-TA/exec"; 
 
-// 過去データの読み込み
+// アプリ起動時にスプレッドシートから過去のデータをすべて読み込む
 window.addEventListener('load', async () => {
-    statusMessage.innerText = "⏳ 過去の得意先データを読み込み中...";
+    statusMessage.innerText = "⏳ 過去のデータを読み込み中...";
     try {
         const response = await fetch(GAS_URL);
         if (response.ok) {
-            serverMasterData = await response.json();
+            const resData = await response.json();
+            
+            // 1. 運転手リストの生成 💡追加
+            driverList.innerHTML = "";
+            if (resData.drivers) {
+                resData.drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver;
+                    driverList.appendChild(option);
+                });
+            }
+
+            // 2. 車番リストの生成
+            carList.innerHTML = "";
+            if (resData.carNumbers) {
+                resData.carNumbers.forEach(car => {
+                    const option = document.createElement('option');
+                    option.value = car;
+                    carList.appendChild(option);
+                });
+            }
+
+            // 3. 会社名・店舗リストの生成
+            serverMasterData = resData.targetMaster || {};
             companyList.innerHTML = "";
             Object.keys(serverMasterData).forEach(company => {
                 const option = document.createElement('option');
                 option.value = company;
                 companyList.appendChild(option);
             });
+            
             statusMessage.innerText = "✅ データの準備ができました";
         }
     } catch (error) {
@@ -43,10 +72,11 @@ window.addEventListener('load', async () => {
     }
 });
 
-// 連動処理
+// 会社名が入力・選択されたら、その会社に対応する店舗の選択肢を表示する
 companyInput.addEventListener('input', () => {
     const selectedCompany = companyInput.value;
-    shopList.innerHTML = "";
+    shopList.innerHTML = ""; 
+    
     if (selectedCompany && serverMasterData[selectedCompany]) {
         serverMasterData[selectedCompany].forEach(shop => {
             const option = document.createElement('option');
@@ -72,8 +102,8 @@ btnArrival.addEventListener('click', () => {
 
 // 保存ボタン
 btnSave.addEventListener('click', async () => {
-    reportData.driver = document.getElementById('driver').value;
-    reportData.carNumber = document.getElementById('car-number').value;
+    reportData.driver = driverInput.value;
+    reportData.carNumber = carInput.value;
     reportData.company = companyInput.value;
     reportData.shop = shopInput.value;
 
@@ -93,7 +123,11 @@ btnSave.addEventListener('click', async () => {
         });
 
         if (response.ok) {
-            statusMessage.innerText = "✅ スプレッドシートへ自動記録しました！";
+            statusMessage.innerText = "✅ スプレッドシートへ自動記録しました！画面を再読み込みすると次回から選択できます。";
+            
+            // 入力欄をクリア（運転手名と車番は、何度も入力しなくていいようにあえて残しています）
+            companyInput.value = "";
+            shopInput.value = "";
         } else {
             statusMessage.innerText = "❌ 送信エラーが発生しました。";
         }
@@ -103,8 +137,7 @@ btnSave.addEventListener('click', async () => {
     }
 });
 
-// 💡 印刷ボタンを押したときの処理
+// 印刷ボタン
 btnPrint.addEventListener('click', () => {
-    // スマホ・ブラウザ標準の印刷画面を呼び出す
     window.print();
 });
