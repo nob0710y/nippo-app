@@ -74,10 +74,13 @@ hr {
     transform: scale(0.98);
 }
 
+/* 💡 ボタンの色を調整 */
+.btn-purple { background-color: #6f42c1; }
+.btn-darkgreen { background-color: #198754; }
 .btn-blue { background-color: #007bff; }
 .btn-green { background-color: #28a745; }
 .btn-orange { background-color: #ff9800; width: 100%; margin-top: 20px; font-size: 18px;}
-.btn-gray { background-color: #6c757d; width: 100%; margin-top: 10px; } /* 印刷ボタン用 */
+.btn-gray { background-color: #6c757d; width: 100%; margin-top: 10px; }
 
 .status {
     margin-top: 15px;
@@ -86,25 +89,9 @@ hr {
     color: #666;
 }
 
-/* 💡 ここから下が印刷用のデザイン設定（マジック） */
 @media print {
-    body {
-        background-color: #fff;
-        padding: 0;
-    }
-    .app-container {
-        box-shadow: none;
-        max-width: 100%;
-        padding: 0;
-    }
-    /* 印刷するときにいらない「ボタン」や「ヒント文字（placeholder）」を消す */
-    .btn, hr, .status {
-        display: none !important;
-    }
-    /* 入力欄の枠線を消して、ただの文字のように見せる */
-    input, select {
-        border: none;
-        padding: 5px 0;
-        font-size: 18px;
-    }
+    body { background-color: #fff; padding: 0; }
+    .app-container { box-shadow: none; max-width: 100%; padding: 0; }
+    .btn, hr, .status { display: none !important; }
+    input, select { border: none; padding: 5px 0; font-size: 18px; }
 }

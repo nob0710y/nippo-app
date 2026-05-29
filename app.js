@@ -1,6 +1,8 @@
 let reportData = {
     driver: "",
     carNumber: "",
+    companyDepartureTime: "", // 💡 自社出発 ★新設
+    companyArrivalTime: "",   // 💡 自社帰庫   ★新設
     departureTime: "",
     arrivalTime: "",
     company: "",
@@ -9,6 +11,9 @@ let reportData = {
 
 let serverMasterData = {};
 
+// ボタン要素の取得
+const btnCoDeparture = document.getElementById('btn-co-departure'); // ★新設
+const btnCoArrival = document.getElementById('btn-co-arrival');     // ★新設
 const btnDeparture = document.getElementById('btn-departure');
 const btnArrival = document.getElementById('btn-arrival');
 const btnSave = document.getElementById('btn-save');
@@ -24,7 +29,6 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// --- 🔴 ここにご自身のGASのWebアプリURLを貼り付けてください ---
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwKBITZn5JomjaNMzLSnjHwBIE1qCeKPY7GnPl9dqohwjNUtDh6v5IDlfkG9f5_S7e-TA/exec"; 
 
 // アプリ起動時にスプレッドシートから過去のデータをすべて読み込む
@@ -35,7 +39,7 @@ window.addEventListener('load', async () => {
         if (response.ok) {
             const resData = await response.json();
             
-            // 1. 運転手リストの生成 💡追加
+            // 1. 運転手リスト
             driverList.innerHTML = "";
             if (resData.drivers) {
                 resData.drivers.forEach(driver => {
@@ -45,7 +49,7 @@ window.addEventListener('load', async () => {
                 });
             }
 
-            // 2. 車番リストの生成
+            // 2. 車番リスト
             carList.innerHTML = "";
             if (resData.carNumbers) {
                 resData.carNumbers.forEach(car => {
@@ -55,7 +59,7 @@ window.addEventListener('load', async () => {
                 });
             }
 
-            // 3. 会社名・店舗リストの生成
+            // 3. 会社名・店舗リスト
             serverMasterData = resData.targetMaster || {};
             companyList.innerHTML = "";
             Object.keys(serverMasterData).forEach(company => {
@@ -72,11 +76,10 @@ window.addEventListener('load', async () => {
     }
 });
 
-// 会社名が入力・選択されたら、その会社に対応する店舗の選択肢を表示する
+// 連動処理
 companyInput.addEventListener('input', () => {
     const selectedCompany = companyInput.value;
     shopList.innerHTML = ""; 
-    
     if (selectedCompany && serverMasterData[selectedCompany]) {
         serverMasterData[selectedCompany].forEach(shop => {
             const option = document.createElement('option');
@@ -86,18 +89,32 @@ companyInput.addEventListener('input', () => {
     }
 });
 
-// 出発ボタン
+// 💡 🏠自社出発ボタンを押したとき ★新設
+btnCoDeparture.addEventListener('click', () => {
+    const now = new Date();
+    reportData.companyDepartureTime = now.toLocaleString('ja-JP');
+    statusMessage.innerText = `🏠 自社出発を記録 (${now.toLocaleTimeString('ja-JP')})`;
+});
+
+// 💡 🏠自社帰庫ボタンを押したとき ★新設
+btnCoArrival.addEventListener('click', () => {
+    const now = new Date();
+    reportData.companyArrivalTime = now.toLocaleString('ja-JP');
+    statusMessage.innerText = `🏠 自社帰庫を記録 (${now.toLocaleTimeString('ja-JP')})`;
+});
+
+// 🛫 出発ボタン
 btnDeparture.addEventListener('click', () => {
     const now = new Date();
     reportData.departureTime = now.toLocaleString('ja-JP');
-    statusMessage.innerText = `🛫 出発時刻を記録しました (${now.toLocaleTimeString('ja-JP')})`;
+    statusMessage.innerText = `🛫 到着時刻を記録 (${now.toLocaleTimeString('ja-JP')})`;
 });
 
-// 帰庫ボタン
+// 🛬 帰庫ボタン
 btnArrival.addEventListener('click', () => {
     const now = new Date();
     reportData.arrivalTime = now.toLocaleString('ja-JP');
-    statusMessage.innerText = `🛬 帰庫時刻を記録しました (${now.toLocaleTimeString('ja-JP')})`;
+    statusMessage.innerText = `🛬 出発時刻を記録 (${now.toLocaleTimeString('ja-JP')})`;
 });
 
 // 保存ボタン
@@ -123,11 +140,16 @@ btnSave.addEventListener('click', async () => {
         });
 
         if (response.ok) {
-            statusMessage.innerText = "✅ スプレッドシートへ自動記録しました！画面を再読み込みすると次回から選択できます。";
+            statusMessage.innerText = "✅ スプレッドシートへ自動記録しました！";
             
-            // 入力欄をクリア（運転手名と車番は、何度も入力しなくていいようにあえて残しています）
+            // 一部をクリア（次回入力用）
             companyInput.value = "";
             shopInput.value = "";
+            // 時刻データも次のターンのために一度リセット
+            reportData.companyDepartureTime = "";
+            reportData.companyArrivalTime = "";
+            reportData.departureTime = "";
+            reportData.arrivalTime = "";
         } else {
             statusMessage.innerText = "❌ 送信エラーが発生しました。";
         }
