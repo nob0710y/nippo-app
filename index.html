@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>運航管理日報</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <h2>🚚 運航管理日報</h2>
+        
+        <div class="form-group">
+            <label for="driver">運転手名</label>
+            <input type="text" id="driver" placeholder="名前を入力">
+        </div>
+        <div class="form-group">
+            <label for="car-number">車番選択</label>
+            <select id="car-number">
+                <option value="">選択してください</option>
+                <option value="品川100 あ 1234">品川100 あ 1234</option>
+                <option value="品川200 い 5678">品川200 い 5678</option>
+            </select>
+        </div>
+
+        <hr>
+
+        <div class="btn-grid">
+            <button type="button" id="btn-departure" class="btn btn-blue">🛫 出発</button>
+            <button type="button" id="btn-arrival" class="btn btn-green">🛬 帰庫</button>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="company">得意先（会社名）</label>
+            <input type="text" id="company" list="company-list" placeholder="選択または新規入力">
+            <datalist id="company-list"></datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="shop">得意先（店舗名）</label>
+            <input type="text" id="shop" list="shop-list" placeholder="選択または新規入力">
+            <datalist id="shop-list"></datalist>
+        </div>
+
+        <button type="button" id="btn-save" class="btn btn-orange">💾 データを保存</button>
+        
+        <button type="button" id="btn-print" class="btn btn-gray">🖨️ 日報を印刷・PDF化</button>
+        
+        <p id="status-message" class="status"></p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
