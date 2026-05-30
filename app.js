@@ -1,5 +1,5 @@
 let serverMasterData = {};
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwKBITZn5JomjaNMzLSnjHwBIE1qCeKPY7GnPl9dqohwjNUtDh6v5IDlfkG9f5_S7e-TA/exec"; 
+const GAS_URL = "YOUR_GAS_WEB_APP_URL_HERE"; 
 
 // 各種要素の取得
 const btnCoDeparture = document.getElementById('btn-co-departure');
@@ -19,7 +19,7 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// 履歴を画面に描画する関数
+// 履歴を描画する関数
 function renderHistory(historyList) {
     if (!historyList || historyList.length === 0) {
         historyBox.innerHTML = "<p style='color:#999;'>履歴はまだありません。</p>";
@@ -45,7 +45,7 @@ function renderHistory(historyList) {
     });
 }
 
-// アプリ起動時にデータをすべて読み込む
+// データ初期読み込み
 window.addEventListener('load', async () => {
     statusMessage.innerText = "過去のデータを読み込み中...";
     try {
@@ -53,7 +53,7 @@ window.addEventListener('load', async () => {
         if (response.ok) {
             const resData = await response.json();
             
-            // 運転手リストの自動生成
+            // 運転手リスト
             driverList.innerHTML = "";
             if (resData.drivers) {
                 resData.drivers.forEach(driver => {
@@ -63,7 +63,7 @@ window.addEventListener('load', async () => {
                 });
             }
 
-            // 車番リストの自動生成
+            // 車番リスト
             carList.innerHTML = "";
             if (resData.carNumbers) {
                 resData.carNumbers.forEach(car => {
@@ -73,7 +73,7 @@ window.addEventListener('load', async () => {
                 });
             }
 
-            // 💡 過去に保存された「会社名」をリストに自動追加 ★修正
+            // 会社名リスト
             serverMasterData = resData.targetMaster || {};
             companyList.innerHTML = "";
             Object.keys(serverMasterData).forEach(company => {
@@ -84,7 +84,7 @@ window.addEventListener('load', async () => {
                 }
             });
             
-            // 💡 過去に保存されたすべての「店舗名」も、初期状態としてリストに自動追加 ★追加
+            // 店舗名全リスト
             shopList.innerHTML = "";
             let allShops = [];
             Object.values(serverMasterData).forEach(shops => {
@@ -109,15 +109,12 @@ window.addEventListener('load', async () => {
     }
 });
 
-// 💡 会社名が選ばれたら、その会社に紐づく店舗名だけに絞り込む連動処理 ★強化
+// 会社名・店舗名の連動絞り込み
 companyInput.addEventListener('input', () => {
     const selectedCompany = companyInput.value;
-    
-    // 一度リストを空にする
     shopList.innerHTML = ""; 
     
     if (selectedCompany && serverMasterData[selectedCompany]) {
-        // 特定の会社名が入力されている時は、その会社の実績店舗だけを表示
         serverMasterData[selectedCompany].forEach(shop => {
             if (shop && shop !== "未入力") {
                 const option = document.createElement('option');
@@ -126,7 +123,6 @@ companyInput.addEventListener('input', () => {
             }
         });
     } else {
-        // 会社名が空欄、または新規入力の時はすべての店舗を候補に出す
         let allShops = [];
         Object.values(serverMasterData).forEach(shops => {
             shops.forEach(shop => {
@@ -143,7 +139,7 @@ companyInput.addEventListener('input', () => {
     }
 });
 
-// ボタンを押した瞬間に「その場のデータ」を送信して自動保存する共通関数
+// 自動保存関数
 async function saveDataAutomatically(timeKey, timeValue, successMsg) {
     let instantData = {
         driver: driverInput.value,
@@ -187,28 +183,22 @@ async function saveDataAutomatically(timeKey, timeValue, successMsg) {
     }
 }
 
-// 各ボタンのクリックイベント
+// クリックイベント
 btnCoDeparture.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
     saveDataAutomatically('companyDepartureTime', timeStr, '市場発を記録しました。');
 });
-
 btnCoArrival.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
     saveDataAutomatically('companyArrivalTime', timeStr, '市場着を記録しました。');
 });
-
 btnDeparture.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
     saveDataAutomatically('departureTime', timeStr, '到着を記録しました。');
 });
-
 btnArrival.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
     saveDataAutomatically('arrivalTime', timeStr, '出発を記録しました。');
 });
 
-// 印刷
-btnPrint.addEventListener('click', () => {
-    window.print();
-});
+btnPrint.addEventListener('click', () => { window.print(); });
