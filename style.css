@@ -74,13 +74,11 @@ hr {
     transform: scale(0.98);
 }
 
-/* 💡 ボタンの色を調整 */
 .btn-purple { background-color: #6f42c1; }
 .btn-darkgreen { background-color: #198754; }
 .btn-blue { background-color: #007bff; }
 .btn-green { background-color: #28a745; }
-.btn-orange { background-color: #ff9800; width: 100%; margin-top: 20px; font-size: 18px;}
-.btn-gray { background-color: #6c757d; width: 100%; margin-top: 10px; }
+.btn-gray { background-color: #6c757d; width: 100%; margin-top: 15px; }
 
 .status {
     margin-top: 15px;
@@ -89,9 +87,36 @@ hr {
     color: #666;
 }
 
+/* 💡 履歴全件スクロール用のデザイン修正 */
+.history-section {
+    margin-top: 30px;
+    border-top: 2px dashed #ddd;
+    padding-top: 20px;
+}
+.history-section h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #444;
+}
+#history-box {
+    max-height: 320px; /* 💡 高さを固定してこれ以上はスクロールにする */
+    overflow-y: auto;  /* 💡 縦スクロールを有効化 */
+    padding-right: 5px;
+}
+.history-card {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+}
+
 @media print {
     body { background-color: #fff; padding: 0; }
     .app-container { box-shadow: none; max-width: 100%; padding: 0; }
-    .btn, hr, .status { display: none !important; }
+    .btn, hr, .status, .history-section { display: none !important; }
     input, select { border: none; padding: 5px 0; font-size: 18px; }
 }
