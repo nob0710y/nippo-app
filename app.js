@@ -19,7 +19,7 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// 履歴を画面に描画する関数（全件対応）
+// 履歴を画面に描画する関数
 function renderHistory(historyList) {
     if (!historyList || historyList.length === 0) {
         historyBox.innerHTML = "<p style='color:#999;'>履歴はまだありません。</p>";
@@ -36,7 +36,7 @@ function renderHistory(historyList) {
         }
 
         card.innerHTML = `
-            <strong>⏱️ ${item.date}</strong><br>
+            <strong>日時: ${item.date}</strong><br>
             乗務: ${item.driver || "未入力"} ｜ 車番: ${item.carNumber || "未入力"}<br>
             行先: ${item.company} ${item.shop}<br>
             メーター: ${item.startKm || "-"} -> ${item.endKm || "-"}km${r走行距離}
@@ -47,7 +47,7 @@ function renderHistory(historyList) {
 
 // アプリ起動時にデータをすべて読み込む
 window.addEventListener('load', async () => {
-    statusMessage.innerText = "⏳ 過去のデータを読み込み中...";
+    statusMessage.innerText = "過去のデータを読み込み中...";
     try {
         const response = await fetch(GAS_URL);
         if (response.ok) {
@@ -82,13 +82,12 @@ window.addEventListener('load', async () => {
                 companyList.appendChild(option);
             });
             
-            // 履歴（全件）を表示
             renderHistory(resData.history);
-            statusMessage.innerText = "✅ 最新の状態に更新されました";
+            statusMessage.innerText = "最新の状態に更新されました";
         }
     } catch (error) {
         console.error(error);
-        statusMessage.innerText = "⚠️ データの読み込みに失敗しました";
+        statusMessage.innerText = "データの読み込みに失敗しました";
     }
 });
 
@@ -105,9 +104,8 @@ companyInput.addEventListener('input', () => {
     }
 });
 
-// 💡 ボタンを押した瞬間に「その場のデータ」を送信して自動保存する共通関数
-async function saveDataAutomatically(timeKey, timeValue) {
-    // 送信用データオブジェクトをその場で作る
+// ボタンを押した瞬間に「その場のデータ」を送信して自動保存する共通関数
+async function saveDataAutomatically(timeKey, timeValue, successMsg) {
     let instantData = {
         driver: driverInput.value,
         carNumber: carInput.value,
@@ -121,16 +119,14 @@ async function saveDataAutomatically(timeKey, timeValue) {
         shop: shopInput.value || "未入力"
     };
 
-    // どのボタンが押されたかに応じて、該当する時間枠にセット
     instantData[timeKey] = timeValue;
 
-    // 基本チェック
     if (!instantData.driver || !instantData.carNumber) {
         alert('運転手名と車番を入力してからボタンを押してください。');
         return;
     }
 
-    statusMessage.innerText = "⏳ データを自動保存中...";
+    statusMessage.innerText = "データを自動保存中...";
 
     try {
         const response = await fetch(GAS_URL, {
@@ -141,37 +137,36 @@ async function saveDataAutomatically(timeKey, timeValue) {
         });
 
         if (response.ok) {
-            statusMessage.innerText = "✅ リアルタイム保存に成功しました！";
-            // 反映のため1秒後に自動リロード
+            statusMessage.innerText = successMsg + " リアルタイム保存に成功しました。";
             setTimeout(() => { location.reload(); }, 1000);
         } else {
-            statusMessage.innerText = "❌ 自動保存に失敗しました。";
+            statusMessage.innerText = "自動保存に失敗しました。";
         }
     } catch (error) {
         console.error(error);
-        statusMessage.innerText = "❌ 通信エラーが発生しました。";
+        statusMessage.innerText = "通信エラーが発生しました。";
     }
 }
 
-// 💡 各ボタンのクリックイベント（時間を生成して即自動保存へ投げる）
+// 各ボタンのクリックイベント（修正後の文言に対応）
 btnCoDeparture.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('companyDepartureTime', timeStr);
+    saveDataAutomatically('companyDepartureTime', timeStr, '市場発を記録しました。');
 });
 
 btnCoArrival.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('companyArrivalTime', timeStr);
+    saveDataAutomatically('companyArrivalTime', timeStr, '市場着を記録しました。');
 });
 
 btnDeparture.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('departureTime', timeStr);
+    saveDataAutomatically('departureTime', timeStr, '到着を記録しました。');
 });
 
 btnArrival.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('arrivalTime', timeStr);
+    saveDataAutomatically('arrivalTime', timeStr, '出発を記録しました。');
 });
 
 // 印刷

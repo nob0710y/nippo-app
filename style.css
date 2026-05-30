@@ -27,6 +27,16 @@ h2 {
     color: #333;
 }
 
+/* 💡 横並びを作るためのスタイルを追加 ★新設 */
+.form-row {
+    display: flex;
+    gap: 15px; /* 項目間のスキマ */
+    margin-bottom: 5px;
+}
+.flex-1 {
+    flex: 1; /* 均等な幅に引き伸ばす */
+}
+
 .form-group {
     margin-bottom: 15px;
 }
@@ -87,7 +97,7 @@ hr {
     color: #666;
 }
 
-/* 💡 履歴全件スクロール用のデザイン修正 */
+/* 履歴全件スクロール用のデザイン */
 .history-section {
     margin-top: 30px;
     border-top: 2px dashed #ddd;
@@ -99,8 +109,8 @@ hr {
     color: #444;
 }
 #history-box {
-    max-height: 320px; /* 💡 高さを固定してこれ以上はスクロールにする */
-    overflow-y: auto;  /* 💡 縦スクロールを有効化 */
+    max-height: 320px;
+    overflow-y: auto;
     padding-right: 5px;
 }
 .history-card {
