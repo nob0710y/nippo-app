@@ -53,7 +53,7 @@ window.addEventListener('load', async () => {
         if (response.ok) {
             const resData = await response.json();
             
-            // 運転手リスト
+            // 運転手リストの自動生成
             driverList.innerHTML = "";
             if (resData.drivers) {
                 resData.drivers.forEach(driver => {
@@ -63,7 +63,7 @@ window.addEventListener('load', async () => {
                 });
             }
 
-            // 車番リスト
+            // 車番リストの自動生成
             carList.innerHTML = "";
             if (resData.carNumbers) {
                 resData.carNumbers.forEach(car => {
@@ -73,13 +73,31 @@ window.addEventListener('load', async () => {
                 });
             }
 
-            // 会社名・店舗リスト
+            // 💡 過去に保存された「会社名」をリストに自動追加 ★修正
             serverMasterData = resData.targetMaster || {};
             companyList.innerHTML = "";
             Object.keys(serverMasterData).forEach(company => {
+                if (company && company !== "未入力") {
+                    const option = document.createElement('option');
+                    option.value = company;
+                    companyList.appendChild(option);
+                }
+            });
+            
+            // 💡 過去に保存されたすべての「店舗名」も、初期状態としてリストに自動追加 ★追加
+            shopList.innerHTML = "";
+            let allShops = [];
+            Object.values(serverMasterData).forEach(shops => {
+                shops.forEach(shop => {
+                    if (shop && shop !== "未入力" && !allShops.includes(shop)) {
+                        allShops.push(shop);
+                    }
+                });
+            });
+            allShops.forEach(shop => {
                 const option = document.createElement('option');
-                option.value = company;
-                companyList.appendChild(option);
+                option.value = shop;
+                shopList.appendChild(option);
             });
             
             renderHistory(resData.history);
@@ -91,12 +109,33 @@ window.addEventListener('load', async () => {
     }
 });
 
-// 連動処理
+// 💡 会社名が選ばれたら、その会社に紐づく店舗名だけに絞り込む連動処理 ★強化
 companyInput.addEventListener('input', () => {
     const selectedCompany = companyInput.value;
+    
+    // 一度リストを空にする
     shopList.innerHTML = ""; 
+    
     if (selectedCompany && serverMasterData[selectedCompany]) {
+        // 特定の会社名が入力されている時は、その会社の実績店舗だけを表示
         serverMasterData[selectedCompany].forEach(shop => {
+            if (shop && shop !== "未入力") {
+                const option = document.createElement('option');
+                option.value = shop;
+                shopList.appendChild(option);
+            }
+        });
+    } else {
+        // 会社名が空欄、または新規入力の時はすべての店舗を候補に出す
+        let allShops = [];
+        Object.values(serverMasterData).forEach(shops => {
+            shops.forEach(shop => {
+                if (shop && shop !== "未入力" && !allShops.includes(shop)) {
+                    allShops.push(shop);
+                }
+            });
+        });
+        allShops.forEach(shop => {
             const option = document.createElement('option');
             option.value = shop;
             shopList.appendChild(option);
@@ -148,7 +187,7 @@ async function saveDataAutomatically(timeKey, timeValue, successMsg) {
     }
 }
 
-// 各ボタンのクリックイベント（修正後の文言に対応）
+// 各ボタンのクリックイベント
 btnCoDeparture.addEventListener('click', () => {
     const timeStr = new Date().toLocaleString('ja-JP');
     saveDataAutomatically('companyDepartureTime', timeStr, '市場発を記録しました。');
