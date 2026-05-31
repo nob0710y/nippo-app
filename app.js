@@ -45,9 +45,8 @@ function renderHistory(historyList) {
     });
 }
 
-// データ初期読み込み
-window.addEventListener('load', async () => {
-    statusMessage.innerText = "過去のデータを読み込み中...";
+// サーバーから最新の履歴とマスターデータを取得して画面を更新する関数
+async function fetchAndRefreshData() {
     try {
         const response = await fetch(GAS_URL);
         if (response.ok) {
@@ -100,13 +99,19 @@ window.addEventListener('load', async () => {
                 shopList.appendChild(option);
             });
             
+            // 💡 下部の履歴エリアだけを書き換える
             renderHistory(resData.history);
-            statusMessage.innerText = "最新の状態に更新されました";
         }
     } catch (error) {
-        console.error(error);
-        statusMessage.innerText = "データの読み込みに失敗しました";
+        console.error("データ更新エラー:", error);
     }
+}
+
+// データ初期読み込み
+window.addEventListener('load', async () => {
+    statusMessage.innerText = "過去のデータを読み込み中...";
+    await fetchAndRefreshData();
+    statusMessage.innerText = "最新の状態に更新されました";
 });
 
 // 会社名・店舗名の連動絞り込み
@@ -173,7 +178,12 @@ async function saveDataAutomatically(timeKey, timeValue, successMsg) {
 
         if (response.ok) {
             statusMessage.innerText = successMsg + " リアルタイム保存に成功しました。";
-            setTimeout(() => { location.reload(); }, 1000);
+            
+            // 💡 画面全体をリロードするのをやめ、値はそのまま残して履歴だけを最新にする ★修正
+            await fetchAndRefreshData();
+            
+            // 3秒後にステータスメッセージをクリア
+            setTimeout(() => { statusMessage.innerText = "最新の状態に更新されました"; }, 3000);
         } else {
             statusMessage.innerText = "自動保存に失敗しました。";
         }
