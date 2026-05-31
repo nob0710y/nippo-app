@@ -6,7 +6,7 @@ const btnCoArrival = document.getElementById('btn-co-arrival');
 const btnDeparture = document.getElementById('btn-departure');
 const btnArrival = document.getElementById('btn-arrival');
 const btnPrint = document.getElementById('btn-print');
-const btnClearHistory = document.getElementById('btn-clear-history'); // 💡クリアボタンの取得
+const btnClearHistory = document.getElementById('btn-clear-history'); 
 const statusMessage = document.getElementById('status-message');
 const historyBox = document.getElementById('history-box');
 
@@ -19,7 +19,10 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// スマホのローカルストレージ（内部メモリ）からデータを引き出す（シート消去対策）
+// 💡 メーター入力欄の取得
+const meterStartInput = document.getElementById('meter-start');
+const meterEndInput = document.getElementById('meter-end');
+
 let localHistoryMap = JSON.parse(localStorage.getItem('nippo_local_history')) || {};
 
 function getShortTimeNow() {
@@ -32,6 +35,40 @@ function formatShortTime(dateTimeStr) {
     if (dateTimeStr.length === 5 && dateTimeStr.includes(':')) return dateTimeStr;
     const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
     return timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : dateTimeStr;
+}
+
+function updateDatalist(element, list) {
+    element.innerHTML = "";
+    list.forEach(item => {
+        if (item && item !== "未入力") {
+            const option = document.createElement('option');
+            option.value = item;
+            element.appendChild(option);
+        }
+    });
+}
+
+function setupForceDropdownOnFocus(inputElement) {
+    let originalValue = "";
+    const handleFocus = function() {
+        originalValue = inputElement.value;
+        inputElement.value = ""; 
+        setTimeout(() => {
+            if (inputElement.value === "") {
+                inputElement.value = originalValue;
+                inputElement.select();
+            }
+        }, 150);
+    };
+    inputElement.addEventListener('focus', handleFocus);
+    inputElement.addEventListener('click', handleFocus);
+    inputElement.addEventListener('blur', function() {
+        setTimeout(() => {
+            if (inputElement.value.trim() === "") {
+                inputElement.value = originalValue; 
+            }
+        }, 200);
+    });
 }
 
 function refreshDisplayGrid() {
@@ -55,9 +92,10 @@ function refreshDisplayGrid() {
         <table class="print-table">
             <thead>
                 <tr>
-                    <th style="width: 12%;">日付</th><th style="width: 15%;">乗務員</th><th style="width: 12%;">車番</th>
-                    <th>行先（会社・店舗）</th><th style="width: 11%;">到着</th><th style="width: 11%;">出発</th>
-                    <th style="width: 11%;">市場発</th><th style="width: 11%;">市場着</th>
+                    <th style="width: 10%;">日付</th><th style="width: 12%;">乗務員</th><th style="width: 10%;">車番</th>
+                    <th>行先（会社・店舗）</th><th style="width: 9%;">到着</th><th style="width: 9%;">出発</th>
+                    <th style="width: 9%;">市場発</th><th style="width: 9%;">市場着</th>
+                    <th style="width: 8%;">開始</th><th style="width: 8%;">終了</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,6 +120,7 @@ function refreshDisplayGrid() {
         card.innerHTML = `
             <div style="border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 6px; color: #666; font-size: 11px;">
                 乗務: <strong>${item.driver || "未"}</strong> ｜ 車番: <strong>${item.carNumber || "未"}</strong>
+                ${(item.meterStart || item.meterEnd) ? ` ｜ メーター: <strong>${item.meterStart || "-"} 〜 ${item.meterEnd || "-"} km</strong>` : ""}
             </div>
             <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 6px;">
                 行先: ${item.company} ${item.shop}
@@ -99,6 +138,7 @@ function refreshDisplayGrid() {
                 <td class="left-align">${item.company} ${item.shop}</td>
                 <td style="font-weight: bold;">${arrivalTime}</td><td style="font-weight: bold;">${departureTime}</td>
                 <td>${coDepTime}</td><td>${coArrTime}</td>
+                <td>${item.meterStart || "-"}</td><td>${item.meterEnd || "-"}</td>
             </tr>
         `;
     });
@@ -112,21 +152,10 @@ async function fetchInitialData() {
         const response = await fetch(GAS_URL);
         if (response.ok) {
             const resData = await response.json();
-            if (resData.drivers) {
-                driverList.innerHTML = "";
-                resData.drivers.forEach(d => { const o = document.createElement('option'); o.value = d; driverList.appendChild(o); });
-            }
-            if (resData.carNumbers) {
-                carList.innerHTML = "";
-                resData.carNumbers.forEach(c => { const o = document.createElement('option'); o.value = c; carList.appendChild(o); });
-            }
+            if (resData.drivers) updateDatalist(driverList, resData.drivers);
+            if (resData.carNumbers) updateDatalist(carList, resData.carNumbers);
             serverMasterData = resData.targetMaster || {};
-            companyList.innerHTML = "";
-            Object.keys(serverMasterData).forEach(comp => {
-                if (comp && comp !== "未入力") {
-                    const o = document.createElement('option'); o.value = comp; companyList.appendChild(o);
-                }
-            });
+            updateDatalist(companyList, Object.keys(serverMasterData));
 
             if (resData.history && resData.history.length > 0) {
                 resData.history.forEach(item => {
@@ -144,16 +173,21 @@ window.addEventListener('load', async () => {
     statusMessage.innerText = "データを読み込み中...";
     refreshDisplayGrid(); 
     await fetchInitialData();
+    
+    setupForceDropdownOnFocus(driverInput);
+    setupForceDropdownOnFocus(carInput);
+    setupForceDropdownOnFocus(companyInput);
+    setupForceDropdownOnFocus(shopInput);
+
     statusMessage.innerText = "いつでも入力可能です";
 });
 
 companyInput.addEventListener('input', () => {
     const selectedCompany = companyInput.value;
-    shopList.innerHTML = ""; 
     if (selectedCompany && serverMasterData[selectedCompany]) {
-        serverMasterData[selectedCompany].forEach(shop => {
-            const option = document.createElement('option'); option.value = shop; shopList.appendChild(option);
-        });
+        updateDatalist(shopList, serverMasterData[selectedCompany]);
+    } else {
+        shopList.innerHTML = "";
     }
 });
 
@@ -162,6 +196,8 @@ function processActionImmediate(timeKey) {
     const cVal = carInput.value;
     const compVal = companyInput.value || "未入力";
     const shopVal = shopInput.value || "未入力";
+    const mStartVal = meterStartInput.value || "";
+    const mEndVal = meterEndInput.value || "";
 
     if (!dVal || !cVal) { alert('運転手名と車番を入力してください。'); return; }
 
@@ -173,22 +209,37 @@ function processActionImmediate(timeKey) {
     if (!localHistoryMap[mapKey]) {
         localHistoryMap[mapKey] = {
             date: dateStr, driver: dVal, carNumber: cVal, company: compVal, shop: shopVal,
-            departureTime: "", arrivalTime: "", companyDepartureTime: "", companyArrivalTime: ""
+            departureTime: "", arrivalTime: "", companyDepartureTime: "", companyArrivalTime: "",
+            meterStart: "", meterEnd: ""
         };
     }
 
     localHistoryMap[mapKey][timeKey] = currentShortTime;
+    // 💡 メーター数もスマホ履歴側に保持
+    if (mStartVal) localHistoryMap[mapKey].meterStart = mStartVal;
+    if (mEndVal) localHistoryMap[mapKey].meterEnd = mEndVal;
+
     localStorage.setItem('nippo_local_history', JSON.stringify(localHistoryMap)); 
 
     refreshDisplayGrid(); 
     statusMessage.innerText = "スマホに保存完了。シートを更新中...";
+
+    const currentDrivers = Array.from(driverList.options).map(o => o.value);
+    const currentCars = Array.from(carList.options).map(o => o.value);
+    const currentCompanies = Object.keys(serverMasterData);
+
+    updateDatalist(driverList, currentDrivers);
+    updateDatalist(carList, currentCars);
+    updateDatalist(companyList, currentCompanies);
 
     const postData = {
         date: localHistoryMap[mapKey].date, driver: dVal, carNumber: cVal, company: compVal, shop: shopVal,
         departureTime: localHistoryMap[mapKey].departureTime || "",
         arrivalTime: localHistoryMap[mapKey].arrivalTime || "",
         companyDepartureTime: localHistoryMap[mapKey].companyDepartureTime || "",
-        companyArrivalTime: localHistoryMap[mapKey].companyArrivalTime || ""
+        companyArrivalTime: localHistoryMap[mapKey].companyArrivalTime || "",
+        meterStart: localHistoryMap[mapKey].meterStart || "", // 💡 送信データに追加
+        meterEnd: localHistoryMap[mapKey].meterEnd || ""       // 💡 送信データに追加
     };
 
     fetch(GAS_URL, {
@@ -203,14 +254,14 @@ function processActionImmediate(timeKey) {
     });
 }
 
-// 💡 履歴を一括クリアするイベント処理（確認用ポップアップ付き）
 btnClearHistory.addEventListener('click', () => {
     const isConfirmed = confirm("スマホに保存されている本日の履歴をすべて削除しますか？\n（※スプレッドシート側のデータは削除されません）");
-    
     if (isConfirmed) {
-        localHistoryMap = {}; // ローカルデータを空っぽにする
-        localStorage.removeItem('nippo_local_history'); // スマホメモリから完全抹消
-        refreshDisplayGrid(); // 画面を再描画（「履歴はまだありません」になる）
+        localHistoryMap = {}; 
+        localStorage.removeItem('nippo_local_history'); 
+        meterStartInput.value = ""; // メーター入力欄もクリア
+        meterEndInput.value = "";
+        refreshDisplayGrid(); 
         statusMessage.innerText = "履歴をすべてクリアしました。";
         setTimeout(() => { statusMessage.innerText = "いつでも入力可能です"; }, 3000);
     }
