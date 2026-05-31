@@ -26,50 +26,110 @@ function formatShortTime(dateTimeStr) {
     return timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : dateTimeStr;
 }
 
-// 💡 履歴を描画する関数 ★英語交じりの日付（T...Z）を完全に排除
+// 💡 履歴を描画する関数 ★同一行先を合体し、到着・出発を2倍サイズにする修正
 function renderHistory(historyList) {
+    let printContainer = document.getElementById('print-table-container');
+    if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'print-table-container';
+        document.querySelector('.app-container').appendChild(printContainer);
+    }
+
     if (!historyList || historyList.length === 0) {
         historyBox.innerHTML = "<p style='color:#999;'>履歴はまだありません。</p>";
+        printContainer.innerHTML = "<p>印刷するデータがありません。</p>";
         return;
     }
-    historyBox.innerHTML = "";
+
+    // --- 💡 同一の会社名・店舗名データを1つにまとめる（合体処理） ---
+    const mergedHistory = [];
     historyList.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'history-card';
+        // すでにまとめたリストの中に、同じ会社名・店舗名のものがあるか探す
+        const existing = mergedHistory.find(m => m.company === item.company && m.shop === item.shop);
         
-        // 各時間を「時:分」の形にスッキリ変換
+        if (existing) {
+            // すでにあれば、空いている時間枠に上書き・統合していく
+            if (item.departureTime && item.departureTime !== "未入力") existing.departureTime = item.departureTime;
+            if (item.arrivalTime && item.arrivalTime !== "未入力") existing.arrivalTime = item.arrivalTime;
+            if (item.companyDepartureTime && item.companyDepartureTime !== "未入力") existing.companyDepartureTime = item.companyDepartureTime;
+            if (item.companyArrivalTime && item.companyArrivalTime !== "未入力") existing.companyArrivalTime = item.companyArrivalTime;
+            if (item.date) existing.date = item.date; // 最新の日付に更新
+        } else {
+            // なければ新規としてリストに加える
+            mergedHistory.push({ ...item });
+        }
+    });
+
+    // --- ① スマホ画面用の表示を作成 ---
+    historyBox.innerHTML = "";
+    
+    // --- ② 印刷用の表（テーブル）の骨組みを開始 ---
+    let tableHtml = `
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">日付</th>
+                    <th style="width: 15%;">乗務員</th>
+                    <th style="width: 12%;">車番</th>
+                    <th>行先（会社・店舗）</th>
+                    <th style="width: 11%;">到着</th>
+                    <th style="width: 11%;">出発</th>
+                    <th style="width: 11%;">市場発</th>
+                    <th style="width: 11%;">市場着</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // 合体済みの綺麗なデータをもとに、画面と印刷用の両方を組み立てる
+    mergedHistory.forEach(item => {
         const arrivalTime = formatShortTime(item.departureTime); 
         const departureTime = formatShortTime(item.arrivalTime); 
         const coDepTime = formatShortTime(item.companyDepartureTime); 
         const coArrTime = formatShortTime(item.companyArrivalTime); 
 
-        // 💡 「2026-05-31」から「05-31」だけをきれいに抜き出す処理
-        let displayDate = "日付不明";
+        // 日付を「月-日」にする
+        let displayDate = "-";
         if (item.date) {
-            const onlyDate = item.date.split(' ')[0]; // スペースより前を取得
+            const onlyDate = item.date.replace('T', ' ').split(' ')[0]; 
             const dateParts = onlyDate.split('-');
-            if (dateParts.length >= 3) {
-                displayDate = `${dateParts[1]}-${dateParts[2]}`; // 「月-日」の形にする
-            } else {
-                displayDate = onlyDate;
-            }
+            if (dateParts.length >= 3) displayDate = `${dateParts[1]}-${dateParts[2]}`;
         }
 
-        // 💡 最上部に「月-日」と「乗務・車番」を。行先の前の余計な日時データは完全カット！
+        // スマホ画面用カードの組み立て（到着・出発を2倍のサイズに！）
+        const card = document.createElement('div');
+        card.className = 'history-card';
         card.innerHTML = `
             <div style="border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 6px; color: #666; font-size: 11px;">
-                📅 ${displayDate} ｜ 乗務: <strong>${item.driver || "未"}</strong> ｜ 車番: <strong>${item.carNumber || "未"}</strong>
+                乗務: <strong>${item.driver || "未"}</strong> ｜ 車番: <strong>${item.carNumber || "未"}</strong>
             </div>
-            <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px;">
+            <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 6px;">
                 行先: ${item.company} ${item.shop}
             </div>
-            <div style="font-size: 13px; color: #444; line-height: 1.4;">
-                ⏱ 到着: <span style="color: #007bff; font-weight: bold;">${arrivalTime}</span> ｜ 出発: <span style="color: #28a745; font-weight: bold;">${departureTime}</span>
-                ${(coDepTime !== "--:--" || coArrTime !== "--:--") ? `<br><span style="font-size: 11px; color: #777;">（市場発: ${coDepTime} ／ 市場着: ${coArrTime}）</span>` : ""}
+            <div style="font-size: 26px; font-weight: bold; color: #222; margin: 8px 0; line-height: 1.2; letter-spacing: -0.5px;">
+                到着: <span style="color: #007bff;">${arrivalTime}</span> ｜ 出発: <span style="color: #28a745;">${departureTime}</span>
             </div>
+            ${(coDepTime !== "--:--" || coArrTime !== "--:--") ? `<div style="font-size: 11px; color: #777; margin-top: 4px;">（市場発: ${coDepTime} ／ 市場着: ${coArrTime}）</div>` : ""}
         `;
         historyBox.appendChild(card);
+
+        // 印刷用テーブルの行を組み立て（印刷時も合体した1行になります）
+        tableHtml += `
+            <tr>
+                <td>${displayDate}</td>
+                <td>${item.driver || "-"}</td>
+                <td>${item.carNumber || "-"}</td>
+                <td class="left-align">${item.company} ${item.shop}</td>
+                <td style="color: #000; font-weight: bold;">${arrivalTime}</td>
+                <td style="color: #000; font-weight: bold;">${departureTime}</td>
+                <td>${coDepTime}</td>
+                <td>${coArrTime}</td>
+            </tr>
+        `;
     });
+
+    tableHtml += `</tbody></table>`;
+    printContainer.innerHTML = tableHtml;
 }
 
 // サーバーから最新の履歴とマスターデータを取得して画面を更新する関数
@@ -126,7 +186,7 @@ async function fetchAndRefreshData() {
                 shopList.appendChild(option);
             });
             
-            // 下部の履歴エリアだけを書き換える
+            // 下部の履歴エリアと印刷用データを書き換える
             renderHistory(resData.history);
         }
     } catch (error) {
@@ -180,8 +240,8 @@ async function saveDataAutomatically(timeKey, timeValue, successMsg) {
         companyArrivalTime: "",
         departureTime: "",
         arrivalTime: "",
-        startKm: document.getElementById('start-km').value,
-        endKm: document.getElementById('end-km').value,
+        startKm: "", 
+        endKm: "",
         company: companyInput.value || "未入力",
         shop: shopInput.value || "未入力"
     };

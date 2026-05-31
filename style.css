@@ -86,16 +86,15 @@ hr {
 .btn-purple { background-color: #6f42c1; }
 .btn-darkgreen { background-color: #198754; }
 
-/* 💡 到着と出発のボタン：縦サイズ2倍（30px）、文字サイズ22px */
 .btn-blue { 
     background-color: #007bff; 
     padding: 30px 15px;
-    font-size: 28px;
+    font-size: 22px;
 }
 .btn-green { 
     background-color: #28a745; 
     padding: 30px 15px;
-    font-size: 28px;
+    font-size: 22px;
 }
 
 .btn-gray { background-color: #6c757d; width: 100%; margin-top: 15px; }
@@ -134,9 +133,61 @@ hr {
     line-height: 1.5;
 }
 
+/* 💡 通常画面では印刷用の表を隠しておく */
+#print-table-container {
+    display: none;
+}
+
+/* ==========================================
+   🖨️ 印刷時専用のスタイル（ここを強化しました）
+   ========================================== */
 @media print {
-    body { background-color: #fff; padding: 0; }
-    .app-container { box-shadow: none; max-width: 100%; padding: 0; }
-    .btn, hr, .status, .history-section { display: none !important; }
-    input, select { border: none; padding: 5px 0; font-size: 18px; }
+    body { 
+        background-color: #fff; 
+        padding: 0; 
+        display: block;
+    }
+    .app-container { 
+        box-shadow: none; 
+        max-width: 100%; 
+        padding: 0; 
+    }
+    /* 画面上の入力欄、ボタン、スマホ用履歴カードなどはすべて非表示 */
+    .form-row, .form-group, hr, p, .btn, .status, .history-section { 
+        display: none !important; 
+    }
+    
+    /* タイトルを印刷用に調整 */
+    h2 {
+        text-align: left;
+        font-size: 24px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 5px;
+    }
+
+    /* 印刷用の表を表示する */
+    #print-table-container {
+        display: block !important;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .print-table {
+        width: 100%;
+        border-collapse: collapse; /* 枠線を1本にまとめる */
+        font-size: 12px;
+    }
+    .print-table th, .print-table td {
+        border: 1px solid #000; /* 真っ黒な細線 */
+        padding: 8px 6px;
+        text-align: center;
+        color: #000;
+    }
+    .print-table th {
+        background-color: #f2f2f2 !important; /* 表のヘッダーを薄グレーに */
+        font-weight: bold;
+    }
+    .print-table td.left-align {
+        text-align: left; /* 行先だけは左寄せで見やすく */
+    }
 }
