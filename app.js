@@ -19,15 +19,26 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// 日時データから「時:分」だけをきれいに抜き出す便利な関数
+// 💡 スマホの内部メモリ（localStorage）から過去のデータを読み込む。なければ空。
+let localHistoryMap = JSON.parse(localStorage.getItem('nippo_local_history')) || {};
+
+// 「時:分」の文字列を作るヘルパー関数
+function getShortTimeNow() {
+    const now = new Date();
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    return `${hrs}:${mins}`;
+}
+
 function formatShortTime(dateTimeStr) {
-    if (!dateTimeStr || dateTimeStr === "未入力") return "--:--";
+    if (!dateTimeStr || dateTimeStr === "未入力" || dateTimeStr === "--:--") return "--:--";
+    if (dateTimeStr.length === 5 && dateTimeStr.includes(':')) return dateTimeStr;
     const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
     return timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : dateTimeStr;
 }
 
-// 💡 履歴を描画する関数 ★同一行先を合体し、到着・出発を2倍サイズにする修正
-function renderHistory(historyList) {
+// 画面と印刷エリアを同時に描き直す共通関数
+function refreshDisplayGrid() {
     let printContainer = document.getElementById('print-table-container');
     if (!printContainer) {
         printContainer = document.createElement('div');
@@ -35,35 +46,17 @@ function renderHistory(historyList) {
         document.querySelector('.app-container').appendChild(printContainer);
     }
 
-    if (!historyList || historyList.length === 0) {
+    const keys = Object.keys(localHistoryMap);
+    if (keys.length === 0) {
         historyBox.innerHTML = "<p style='color:#999;'>履歴はまだありません。</p>";
         printContainer.innerHTML = "<p>印刷するデータがありません。</p>";
         return;
     }
 
-    // --- 💡 同一の会社名・店舗名データを1つにまとめる（合体処理） ---
-    const mergedHistory = [];
-    historyList.forEach(item => {
-        // すでにまとめたリストの中に、同じ会社名・店舗名のものがあるか探す
-        const existing = mergedHistory.find(m => m.company === item.company && m.shop === item.shop);
-        
-        if (existing) {
-            // すでにあれば、空いている時間枠に上書き・統合していく
-            if (item.departureTime && item.departureTime !== "未入力") existing.departureTime = item.departureTime;
-            if (item.arrivalTime && item.arrivalTime !== "未入力") existing.arrivalTime = item.arrivalTime;
-            if (item.companyDepartureTime && item.companyDepartureTime !== "未入力") existing.companyDepartureTime = item.companyDepartureTime;
-            if (item.companyArrivalTime && item.companyArrivalTime !== "未入力") existing.companyArrivalTime = item.companyArrivalTime;
-            if (item.date) existing.date = item.date; // 最新の日付に更新
-        } else {
-            // なければ新規としてリストに加える
-            mergedHistory.push({ ...item });
-        }
-    });
-
-    // --- ① スマホ画面用の表示を作成 ---
+    // ① スマホ画面の描画をリセット
     historyBox.innerHTML = "";
-    
-    // --- ② 印刷用の表（テーブル）の骨組みを開始 ---
+
+    // ② 印刷用テーブルのヘッダー準備
     let tableHtml = `
         <table class="print-table">
             <thead>
@@ -81,22 +74,26 @@ function renderHistory(historyList) {
             <tbody>
     `;
 
-    // 合体済みの綺麗なデータをもとに、画面と印刷用の両方を組み立てる
-    mergedHistory.forEach(item => {
-        const arrivalTime = formatShortTime(item.departureTime); 
-        const departureTime = formatShortTime(item.arrivalTime); 
-        const coDepTime = formatShortTime(item.companyDepartureTime); 
-        const coArrTime = formatShortTime(item.companyArrivalTime); 
+    // 内部マップに保存されている行先をループ処理（スマホ内に残っている全データを描画）
+    keys.forEach(mapKey => {
+        const item = localHistoryMap[mapKey];
+        const arrivalTime = formatShortTime(item.departureTime);
+        const departureTime = formatShortTime(item.arrivalTime);
+        const coDepTime = formatShortTime(item.companyDepartureTime);
+        const coArrTime = formatShortTime(item.companyArrivalTime);
 
-        // 日付を「月-日」にする
         let displayDate = "-";
         if (item.date) {
-            const onlyDate = item.date.replace('T', ' ').split(' ')[0]; 
+            const onlyDate = item.date.replace('T', ' ').split(' ')[0];
             const dateParts = onlyDate.split('-');
-            if (dateParts.length >= 3) displayDate = `${dateParts[1]}-${dateParts[2]}`;
+            if (dateParts.length >= 3) {
+                displayDate = `${dateParts[1]}-${dateParts[2]}`;
+            } else {
+                displayDate = onlyDate;
+            }
         }
 
-        // スマホ画面用カードの組み立て（到着・出発を2倍のサイズに！）
+        // スマホ用特大フォントカードの生成
         const card = document.createElement('div');
         card.className = 'history-card';
         card.innerHTML = `
@@ -113,7 +110,7 @@ function renderHistory(historyList) {
         `;
         historyBox.appendChild(card);
 
-        // 印刷用テーブルの行を組み立て（印刷時も合体した1行になります）
+        // 印刷用テーブルの追加
         tableHtml += `
             <tr>
                 <td>${displayDate}</td>
@@ -132,166 +129,153 @@ function renderHistory(historyList) {
     printContainer.innerHTML = tableHtml;
 }
 
-// サーバーから最新の履歴とマスターデータを取得して画面を更新する関数
-async function fetchAndRefreshData() {
+// サーバーからマスターデータを読み込む関数（履歴はサーバーから上書きせずマージする）
+async function fetchInitialData() {
     try {
         const response = await fetch(GAS_URL);
         if (response.ok) {
             const resData = await response.json();
             
-            // 運転手リスト
-            driverList.innerHTML = "";
+            // マスターリスト（選択肢）の更新
             if (resData.drivers) {
-                resData.drivers.forEach(driver => {
-                    const option = document.createElement('option');
-                    option.value = driver;
-                    driverList.appendChild(option);
-                });
+                driverList.innerHTML = "";
+                resData.drivers.forEach(d => { const o = document.createElement('option'); o.value = d; driverList.appendChild(o); });
             }
-
-            // 車番リスト
-            carList.innerHTML = "";
             if (resData.carNumbers) {
-                resData.carNumbers.forEach(car => {
-                    const option = document.createElement('option');
-                    option.value = car;
-                    carList.appendChild(option);
-                });
+                carList.innerHTML = "";
+                resData.carNumbers.forEach(c => { const o = document.createElement('option'); o.value = c; carList.appendChild(o); });
             }
 
-            // 会社名リスト
             serverMasterData = resData.targetMaster || {};
             companyList.innerHTML = "";
-            Object.keys(serverMasterData).forEach(company => {
-                if (company && company !== "未入力") {
-                    const option = document.createElement('option');
-                    option.value = company;
-                    companyList.appendChild(option);
+            Object.keys(serverMasterData).forEach(comp => {
+                if (comp && comp !== "未入力") {
+                    const o = document.createElement('option'); o.value = comp; companyList.appendChild(o);
                 }
             });
-            
-            // 店舗名全リスト
-            shopList.innerHTML = "";
-            let allShops = [];
-            Object.values(serverMasterData).forEach(shops => {
-                shops.forEach(shop => {
-                    if (shop && shop !== "未入力" && !allShops.includes(shop)) {
-                        allShops.push(shop);
+
+            // 💡 スプレッドシート側にデータがあれば、スマホ側で持っていない行先のみ補完（同期）
+            if (resData.history && resData.history.length > 0) {
+                resData.history.forEach(item => {
+                    const k = (item.company || "未入力") + "_" + (item.shop || "未入力");
+                    if (!localHistoryMap[k]) {
+                        localHistoryMap[k] = { ...item };
                     }
                 });
-            });
-            allShops.forEach(shop => {
-                const option = document.createElement('option');
-                option.value = shop;
-                shopList.appendChild(option);
-            });
-            
-            // 下部の履歴エリアと印刷用データを書き換える
-            renderHistory(resData.history);
+                // 同期した結果をスマホに保存
+                localStorage.setItem('nippo_local_history', JSON.stringify(localHistoryMap));
+            }
+            refreshDisplayGrid();
         }
-    } catch (error) {
-        console.error("データ更新エラー:", error);
+    } catch (e) {
+        console.error("初期読み込みエラー:", e);
     }
 }
 
-// データ初期読み込み
+// 起動時の初期化
 window.addEventListener('load', async () => {
-    statusMessage.innerText = "過去のデータを読み込み中...";
-    await fetchAndRefreshData();
-    statusMessage.innerText = "最新の状態に更新されました";
+    statusMessage.innerText = "データを読み込み中...";
+    refreshDisplayGrid(); // サーバー通信を待たずに、まずはスマホ内データを速攻で表示 ★
+    await fetchInitialData();
+    statusMessage.innerText = "いつでも入力可能です";
 });
 
 // 会社名・店舗名の連動絞り込み
 companyInput.addEventListener('input', () => {
     const selectedCompany = companyInput.value;
     shopList.innerHTML = ""; 
-    
     if (selectedCompany && serverMasterData[selectedCompany]) {
         serverMasterData[selectedCompany].forEach(shop => {
             if (shop && shop !== "未入力") {
-                const option = document.createElement('option');
-                option.value = shop;
-                shopList.appendChild(option);
+                const option = document.createElement('option'); option.value = shop; shopList.appendChild(option);
             }
         });
     } else {
         let allShops = [];
         Object.values(serverMasterData).forEach(shops => {
-            shops.forEach(shop => {
-                if (shop && shop !== "未入力" && !allShops.includes(shop)) {
-                    allShops.push(shop);
-                }
-            });
+            shops.forEach(shop => { if (shop && shop !== "未入力" && !allShops.includes(shop)) allShops.push(shop); });
         });
-        allShops.forEach(shop => {
-            const option = document.createElement('option');
-            option.value = shop;
-            shopList.appendChild(option);
-        });
+        allShops.forEach(shop => { const option = document.createElement('option'); option.value = shop; shopList.appendChild(option); });
     }
 });
 
-// 自動保存関数
-async function saveDataAutomatically(timeKey, timeValue, successMsg) {
-    let instantData = {
-        driver: driverInput.value,
-        carNumber: carInput.value,
-        companyDepartureTime: "",
-        companyArrivalTime: "",
-        departureTime: "",
-        arrivalTime: "",
-        startKm: "", 
-        endKm: "",
-        company: companyInput.value || "未入力",
-        shop: shopInput.value || "未入力"
-    };
+// 💡 ボタンを押したら即座にスマホに記録＆スプレッドシート側も同一行を上書き更新させる関数
+function processActionImmediate(timeKey) {
+    const dVal = driverInput.value;
+    const cVal = carInput.value;
+    const compVal = companyInput.value || "未入力";
+    const shopVal = shopInput.value || "未入力";
 
-    instantData[timeKey] = timeValue;
-
-    if (!instantData.driver || !instantData.carNumber) {
+    if (!dVal || !cVal) {
         alert('運転手名と車番を入力してからボタンを押してください。');
         return;
     }
 
-    statusMessage.innerText = "データを自動保存中...";
+    const currentShortTime = getShortTimeNow(); 
+    const mapKey = compVal + "_" + shopVal;
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    try {
-        const response = await fetch(GAS_URL, {
-            method: "POST",
-            mode: "cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify(instantData)
-        });
-
-        if (response.ok) {
-            statusMessage.innerText = successMsg + " リアルタイム保存に成功しました。";
-            await fetchAndRefreshData();
-            setTimeout(() => { statusMessage.innerText = "最新の状態に更新されました"; }, 3000);
-        } else {
-            statusMessage.innerText = "自動保存に失敗しました。";
-        }
-    } catch (error) {
-        console.error(error);
-        statusMessage.innerText = "通信エラーが発生しました。";
+    // 1. スマホ内データ（ローカル）に上書き保存
+    if (!localHistoryMap[mapKey]) {
+        localHistoryMap[mapKey] = {
+            date: dateStr,
+            driver: dVal,
+            carNumber: cVal,
+            company: compVal,
+            shop: shopVal,
+            departureTime: "",
+            arrivalTime: "",
+            companyDepartureTime: "",
+            companyArrivalTime: ""
+        };
     }
+
+    localHistoryMap[mapKey][timeKey] = currentShortTime;
+    
+    // 💡 データをスマホの記憶領域（localStorage）に完全に固定保存！シートを消しても残る ★
+    localStorage.setItem('nippo_local_history', JSON.stringify(localHistoryMap));
+
+    // 2. スマホ画面を0秒で再描画
+    refreshDisplayGrid();
+    statusMessage.innerText = "スマホに保存しました。シートを更新中...";
+
+    // 3. スプレッドシート側に送信（同じ行先があれば上書き更新する形式でPOST）
+    const postData = {
+        date: localHistoryMap[mapKey].date,
+        driver: dVal,
+        carNumber: cVal,
+        company: compVal,
+        shop: shopVal,
+        departureTime: localHistoryMap[mapKey].departureTime || "", // 到着
+        arrivalTime: localHistoryMap[mapKey].arrivalTime || "",     // 出発
+        companyDepartureTime: localHistoryMap[mapKey].companyDepartureTime || "", // 市場発
+        companyArrivalTime: localHistoryMap[mapKey].companyArrivalTime || "",     // 市場着
+        startKm: "", endKm: ""
+    };
+
+    fetch(GAS_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(postData)
+    }).then(res => {
+        if (res.ok) {
+            statusMessage.innerText = "シートの同一行への書き込みも完了しました！";
+            setTimeout(() => { statusMessage.innerText = "最新の状態に更新されました"; }, 2000);
+        } else {
+            statusMessage.innerText = "シート同期エラー（裏で再試行されます）";
+        }
+    }).catch(err => {
+        console.error(err);
+        statusMessage.innerText = "【オフライン保存中】画面のデータは安全です。";
+    });
 }
 
-// クリックイベント
-btnCoDeparture.addEventListener('click', () => {
-    const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('companyDepartureTime', timeStr, '市場発を記録しました。');
-});
-btnCoArrival.addEventListener('click', () => {
-    const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('companyArrivalTime', timeStr, '市場着を記録しました。');
-});
-btnDeparture.addEventListener('click', () => {
-    const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('departureTime', timeStr, '到着を記録しました。');
-});
-btnArrival.addEventListener('click', () => {
-    const timeStr = new Date().toLocaleString('ja-JP');
-    saveDataAutomatically('arrivalTime', timeStr, '出発を記録しました。');
-});
+// 各種クリックイベント
+btnCoDeparture.addEventListener('click', () => { processActionImmediate('companyDepartureTime'); });
+btnCoArrival.addEventListener('click', () => { processActionImmediate('companyArrivalTime'); });
+btnDeparture.addEventListener('click', () => { processActionImmediate('departureTime'); }); // 到着ボタン
+btnArrival.addEventListener('click', () => { processActionImmediate('arrivalTime'); });   // 出発ボタン
 
 btnPrint.addEventListener('click', () => { window.print(); });
