@@ -19,15 +19,14 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// 💡 日時データから「時:分」だけをきれいに抜き出す便利な関数
+// 日時データから「時:分」だけをきれいに抜き出す便利な関数
 function formatShortTime(dateTimeStr) {
     if (!dateTimeStr || dateTimeStr === "未入力") return "--:--";
-    // 「2026/05/31 10:35:12」や「10:35」などの形式から時間を抽出
     const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
     return timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : dateTimeStr;
 }
 
-// 💡 履歴を描画する関数 ★スリムに見やすく修正
+// 💡 履歴を描画する関数 ★英語交じりの日付（T...Z）を完全に排除
 function renderHistory(historyList) {
     if (!historyList || historyList.length === 0) {
         historyBox.innerHTML = "<p style='color:#999;'>履歴はまだありません。</p>";
@@ -39,15 +38,27 @@ function renderHistory(historyList) {
         card.className = 'history-card';
         
         // 各時間を「時:分」の形にスッキリ変換
-        const arrivalTime = formatShortTime(item.departureTime); // 到着ボタンの時間
-        const departureTime = formatShortTime(item.arrivalTime); // 出発ボタンの時間
-        const coDepTime = formatShortTime(item.companyDepartureTime); // 市場発の時間
-        const coArrTime = formatShortTime(item.companyArrivalTime); // 市場着の時間
+        const arrivalTime = formatShortTime(item.departureTime); 
+        const departureTime = formatShortTime(item.arrivalTime); 
+        const coDepTime = formatShortTime(item.companyDepartureTime); 
+        const coArrTime = formatShortTime(item.companyArrivalTime); 
 
-        // 💡 乗務・車番を一番上に。メーターは省き、行先と時間をメインに配置
+        // 💡 「2026-05-31」から「05-31」だけをきれいに抜き出す処理
+        let displayDate = "日付不明";
+        if (item.date) {
+            const onlyDate = item.date.split(' ')[0]; // スペースより前を取得
+            const dateParts = onlyDate.split('-');
+            if (dateParts.length >= 3) {
+                displayDate = `${dateParts[1]}-${dateParts[2]}`; // 「月-日」の形にする
+            } else {
+                displayDate = onlyDate;
+            }
+        }
+
+        // 💡 最上部に「月-日」と「乗務・車番」を。行先の前の余計な日時データは完全カット！
         card.innerHTML = `
             <div style="border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 6px; color: #666; font-size: 11px;">
-                ${item.date.split(' ')[0]} ｜ 乗務: <strong>${item.driver || "未"}</strong> ｜ 車番: <strong>${item.carNumber || "未"}</strong>
+                📅 ${displayDate} ｜ 乗務: <strong>${item.driver || "未"}</strong> ｜ 車番: <strong>${item.carNumber || "未"}</strong>
             </div>
             <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px;">
                 行先: ${item.company} ${item.shop}
