@@ -1,5 +1,5 @@
 let serverMasterData = {};
-const GAS_URL = "YOUR_GAS_WEB_APP_URL_HERE"; 
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwKBITZn5JomjaNMzLSnjHwBIE1qCeKPY7GnPl9dqohwjNUtDh6v5IDlfkG9f5_S7e-TA/exec"; 
 
 // 各種要素の取得
 const btnCoDeparture = document.getElementById('btn-co-departure');
