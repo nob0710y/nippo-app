@@ -13,7 +13,7 @@ body {
     color: #333;
     display: flex;
     justify-content: center;
-    padding: 15px;
+    padding: 8px; /* 💡左右の余白を削って、横幅いっぱいに広げられるようにしました */
 }
 
 .app-container {
@@ -22,20 +22,20 @@ body {
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+    padding: 16px; /* 💡内側の余白を少し詰めて、ボタンのスペースを確保 */
 }
 
 h2 {
     text-align: center;
     color: #222;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     font-size: 22px;
 }
 
 hr {
     border: 0;
     border-top: 1px solid #e0e0e0;
-    margin: 20px 0;
+    margin: 15px 0;
 }
 
 /* ==========================================
@@ -49,16 +49,16 @@ hr {
     text-align: center;
     font-size: 14px;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 /* ==========================================
-   入力欄（フォーム） 💡透けを完全に防止しました
+   入力欄（フォーム）
 ========================================== */
 .form-row {
     display: flex;
-    gap: 12px;
-    margin-bottom: 15px;
+    gap: 8px; /* 💡横並びの隙間を少し狭くして、はみ出しを防ぎます */
+    margin-bottom: 12px;
 }
 
 .form-group {
@@ -68,31 +68,30 @@ hr {
 
 .flex-1 {
     flex: 1;
+    min-width: 0; /* 💡文字数による意図しない突き抜けをガード */
 }
 
 label {
     font-size: 13px;
     font-weight: bold;
     color: #555;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
-/* 💡 ここを強化：背景を真っ白に固定し、枠線を少し太く、文字をくっきりさせました */
 input[type="text"],
 input[type="number"] {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;          /* スマホでズームされないためのサイズ */
+    padding: 10px 8px; /* 💡少し上下左右をすっきりさせて全体の圧迫感を軽減 */
+    font-size: 16px;   /* iPhoneでズームさせないためのサイズ */
     font-weight: 500;
-    color: #111111;           /* 入力された文字の色を濃く */
-    background-color: #ffffff !important; /* 💡絶対に透けないように白に固定 */
-    border: 2px solid #b3cbdc; /* 💡枠線の輪郭をくっきりさせました */
+    color: #111111;
+    background-color: #ffffff !important;
+    border: 2px solid #b3cbdc;
     border-radius: 6px;
     outline: none;
-    -webkit-appearance: none; /* iPhone特有の余計な影を消す */
+    -webkit-appearance: none;
 }
 
-/* 入力欄にフォーカスが当たった（タップした）ときの設定 */
 input[type="text"]:focus,
 input[type="number"]:focus {
     border-color: #007bff;
@@ -101,45 +100,48 @@ input[type="number"]:focus {
 }
 
 /* ==========================================
-   ボタン関係
+   ボタン関係 💡サイズを最大化して押しやすく調整
 ========================================== */
 .btn-grid {
     display: flex;
     gap: 12px;
+    width: 100%;
 }
 
 .btn {
     flex: 1;
-    padding: 14px;
-    font-size: 16px;
+    padding: 16px 10px;    /* 💡高さを出して、指でポンと押しやすくしました */
+    font-size: 18px;       /* 💡文字サイズを大きくして目立たせました */
     font-weight: bold;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15); /* 💡少し立体感を強くしました */
     transition: background 0.2s, transform 0.1s;
+    text-align: center;
+    white-space: nowrap;   /* 💡ボタン内での意図しない改行を防ぎます */
 }
 
 .btn:active {
-    transform: scale(0.98);
+    transform: scale(0.96);
 }
 
 .btn-purple    { background-color: #6f42c1; }
 .btn-darkgreen { background-color: #1e7e34; }
 .btn-blue      { background-color: #007bff; }
 .btn-green     { background-color: #28a745; }
-.btn-gray      { background-color: #6c757d; width: 100%; margin-top: 15px; }
+.btn-gray      { background-color: #6c757d; width: 100%; margin-top: 15px; padding: 12px; font-size: 15px; }
 
 /* ==========================================
    履歴表示セクション
 ========================================== */
 .history-section {
-    margin-top: 25px;
+    margin-top: 20px;
 }
 
 #history-box {
-    max-height: 250px;
+    max-height: 220px;
     overflow-y: auto;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -161,50 +163,19 @@ input[type="number"]:focus {
 }
 
 /* ==========================================
-   印刷用非表示（スマホ画面上では見えない隠しテーブル）
+   印刷用設定（変更なし）
 ========================================== */
 #print-table-container {
     display: none;
 }
 
-/* ==========================================
-   A4印刷・PDF化用のスタイル（印刷時のみ発動）
-========================================== */
 @media print {
-    body {
-        background-color: white;
-        color: black;
-        padding: 0;
-    }
-    .app-container {
-        box-shadow: none;
-        padding: 0;
-        max-width: 100%;
-    }
-    h2, .status, .form-row, label, input, hr, .btn-grid, .btn, .history-section {
-        display: none !important;
-    }
-    #print-table-container {
-        display: block !important;
-        width: 100%;
-    }
-    .print-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        font-size: 11px;
-    }
-    .print-table th, .print-table td {
-        border: 1px solid black;
-        padding: 6px 4px;
-        text-align: center;
-    }
-    .print-table th {
-        background-color: #f2f2f2 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-    .print-table td.left-align {
-        text-align: left;
-    }
+    body { background-color: white; color: black; padding: 0; }
+    .app-container { box-shadow: none; padding: 0; max-width: 100%; }
+    h2, .status, .form-row, label, input, hr, .btn-grid, .btn, .history-section { display: none !important; }
+    #print-table-container { display: block !important; width: 100%; }
+    .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+    .print-table th, .print-table td { border: 1px solid black; padding: 6px 4px; text-align: center; }
+    .print-table th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-table td.left-align { text-align: left; }
 }
