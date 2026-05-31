@@ -13,7 +13,7 @@ body {
     color: #333;
     display: flex;
     justify-content: center;
-    padding: 8px; /* 💡左右の余白を削って、横幅いっぱいに広げられるようにしました */
+    padding: 8px;
 }
 
 .app-container {
@@ -22,7 +22,7 @@ body {
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 16px; /* 💡内側の余白を少し詰めて、ボタンのスペースを確保 */
+    padding: 16px;
 }
 
 h2 {
@@ -57,7 +57,7 @@ hr {
 ========================================== */
 .form-row {
     display: flex;
-    gap: 8px; /* 💡横並びの隙間を少し狭くして、はみ出しを防ぎます */
+    gap: 8px;
     margin-bottom: 12px;
 }
 
@@ -68,7 +68,7 @@ hr {
 
 .flex-1 {
     flex: 1;
-    min-width: 0; /* 💡文字数による意図しない突き抜けをガード */
+    min-width: 0;
 }
 
 label {
@@ -81,8 +81,8 @@ label {
 input[type="text"],
 input[type="number"] {
     width: 100%;
-    padding: 10px 8px; /* 💡少し上下左右をすっきりさせて全体の圧迫感を軽減 */
-    font-size: 16px;   /* iPhoneでズームさせないためのサイズ */
+    padding: 10px 8px;
+    font-size: 16px;
     font-weight: 500;
     color: #111111;
     background-color: #ffffff !important;
@@ -100,7 +100,7 @@ input[type="number"]:focus {
 }
 
 /* ==========================================
-   ボタン関係 💡サイズを最大化して押しやすく調整
+   ボタン関係
 ========================================== */
 .btn-grid {
     display: flex;
@@ -108,23 +108,37 @@ input[type="number"]:focus {
     width: 100%;
 }
 
+/* 基本のボタン共通設定 */
 .btn {
     flex: 1;
-    padding: 16px 10px;    /* 💡高さを出して、指でポンと押しやすくしました */
-    font-size: 18px;       /* 💡文字サイズを大きくして目立たせました */
     font-weight: bold;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15); /* 💡少し立体感を強くしました */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     transition: background 0.2s, transform 0.1s;
     text-align: center;
-    white-space: nowrap;   /* 💡ボタン内での意図しない改行を防ぎます */
+    white-space: nowrap;
 }
 
 .btn:active {
     transform: scale(0.96);
+}
+
+/* 「市場発・市場着」は押しやすい標準サイズ */
+.btn-purple, .btn-darkgreen {
+    padding: 16px 10px;
+    font-size: 18px;
+}
+
+/* 💡【新設】「到着・出発」ボタンを2倍巨大化（高さを倍にして文字も特大に） */
+.btn-blue, .btn-green {
+    padding: 32px 10px !important; /* 💡縦の厚みを2倍（16px → 32px）に拡大！ */
+    font-size: 24px !important;    /* 💡文字サイズを特大（18px → 24px）に拡大！ */
+    letter-spacing: 2px;           /* 文字の間隔を少し広げて見やすく */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* 文字をくっきり浮き立たせる */
+    box-shadow: 0 6px 10px rgba(0,0,0,0.2);  /* 存在感を出すために影を強く */
 }
 
 .btn-purple    { background-color: #6f42c1; }
