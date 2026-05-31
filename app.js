@@ -19,7 +19,15 @@ const companyList = document.getElementById('company-list');
 const shopInput = document.getElementById('shop');
 const shopList = document.getElementById('shop-list');
 
-// 履歴を描画する関数
+// 💡 日時データから「時:分」だけをきれいに抜き出す便利な関数
+function formatShortTime(dateTimeStr) {
+    if (!dateTimeStr || dateTimeStr === "未入力") return "--:--";
+    // 「2026/05/31 10:35:12」や「10:35」などの形式から時間を抽出
+    const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
+    return timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : dateTimeStr;
+}
+
+// 💡 履歴を描画する関数 ★スリムに見やすく修正
 function renderHistory(historyList) {
     if (!historyList || historyList.length === 0) {
         historyBox.innerHTML = "<p style='color:#999;'>履歴はまだありません。</p>";
@@ -30,16 +38,24 @@ function renderHistory(historyList) {
         const card = document.createElement('div');
         card.className = 'history-card';
         
-        let r走行距離 = "";
-        if (item.startKm && item.endKm) {
-            r走行距離 = ` (走行: ${item.endKm - item.startKm}km)`;
-        }
+        // 各時間を「時:分」の形にスッキリ変換
+        const arrivalTime = formatShortTime(item.departureTime); // 到着ボタンの時間
+        const departureTime = formatShortTime(item.arrivalTime); // 出発ボタンの時間
+        const coDepTime = formatShortTime(item.companyDepartureTime); // 市場発の時間
+        const coArrTime = formatShortTime(item.companyArrivalTime); // 市場着の時間
 
+        // 💡 乗務・車番を一番上に。メーターは省き、行先と時間をメインに配置
         card.innerHTML = `
-            <strong>日時: ${item.date}</strong><br>
-            乗務: ${item.driver || "未入力"} ｜ 車番: ${item.carNumber || "未入力"}<br>
-            行先: ${item.company} ${item.shop}<br>
-            メーター: ${item.startKm || "-"} -> ${item.endKm || "-"}km${r走行距離}
+            <div style="border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 6px; color: #666; font-size: 11px;">
+                ${item.date.split(' ')[0]} ｜ 乗務: <strong>${item.driver || "未"}</strong> ｜ 車番: <strong>${item.carNumber || "未"}</strong>
+            </div>
+            <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px;">
+                行先: ${item.company} ${item.shop}
+            </div>
+            <div style="font-size: 13px; color: #444; line-height: 1.4;">
+                ⏱ 到着: <span style="color: #007bff; font-weight: bold;">${arrivalTime}</span> ｜ 出発: <span style="color: #28a745; font-weight: bold;">${departureTime}</span>
+                ${(coDepTime !== "--:--" || coArrTime !== "--:--") ? `<br><span style="font-size: 11px; color: #777;">（市場発: ${coDepTime} ／ 市場着: ${coArrTime}）</span>` : ""}
+            </div>
         `;
         historyBox.appendChild(card);
     });
@@ -99,7 +115,7 @@ async function fetchAndRefreshData() {
                 shopList.appendChild(option);
             });
             
-            // 💡 下部の履歴エリアだけを書き換える
+            // 下部の履歴エリアだけを書き換える
             renderHistory(resData.history);
         }
     } catch (error) {
@@ -178,11 +194,7 @@ async function saveDataAutomatically(timeKey, timeValue, successMsg) {
 
         if (response.ok) {
             statusMessage.innerText = successMsg + " リアルタイム保存に成功しました。";
-            
-            // 💡 画面全体をリロードするのをやめ、値はそのまま残して履歴だけを最新にする ★修正
             await fetchAndRefreshData();
-            
-            // 3秒後にステータスメッセージをクリア
             setTimeout(() => { statusMessage.innerText = "最新の状態に更新されました"; }, 3000);
         } else {
             statusMessage.innerText = "自動保存に失敗しました。";
