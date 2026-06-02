@@ -126,28 +126,30 @@ input:focus {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* 💡 行先登録リスト（増えたらスクロールする無限対応設定） */
+/* 行先登録リスト（スクロール無限対応） */
 #pre-registered-list {
     margin-top: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 260px;    /* 💡 件数が増えても画面を突き破らない高さ */
-    overflow-y: auto;     /* 💡 はみ出た分は枠内でスクロール */
+    max-height: 260px;
+    overflow-y: auto;
     padding-right: 4px;
     border-radius: 4px;
 }
 
+/* 行先カードバッジ */
 .route-badge {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: #ffffff;
     border: 2px solid #cbd5e1;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
+    gap: 6px;
 }
 
 .route-badge.selected {
@@ -160,18 +162,31 @@ input:focus {
     font-size: 14px;
     font-weight: bold;
     color: #333;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.route-badge .btn-del-badge {
-    background: #ef4444;
+/* 💡 順序決定・削除のミニボタン群 */
+.badge-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-move-up, .btn-move-down, .btn-del-badge {
     color: white;
     border: none;
-    padding: 6px 10px;
+    padding: 6px 8px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
 }
+
+.btn-move-up   { background-color: #17a2b8; } /* 水色 */
+.btn-move-down { background-color: #6c757d; } /* 灰色 */
+.btn-del-badge { background-color: #ef4444; } /* 赤色 */
 
 /* ==========================================
    ボタン関係

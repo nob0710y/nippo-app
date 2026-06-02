@@ -61,6 +61,7 @@ function setupPopupSequence() {
     shopInput.addEventListener('keydown', (e) => { if(e.key === 'Enter' && shopInput.value) btnAddRoute.focus(); });
 }
 
+// 💡【新機能】行先リストの描画（🔼 🔽 ボタンの処理を追加）
 function renderPreRegisteredList() {
     preRegisteredListDiv.innerHTML = "";
     preRegisteredRoutes.forEach((route, index) => {
@@ -70,14 +71,32 @@ function renderPreRegisteredList() {
         
         badge.innerHTML = `
             <span class="text">${index + 1}. ${route.company} (${route.shop})</span>
-            <button class="btn-del-badge" data-index="${index}">削除</button>
+            <div class="badge-actions">
+                <button class="btn-move-up" data-index="${index}">🔼</button>
+                <button class="btn-move-down" data-index="${index}">🔽</button>
+                <button class="btn-del-badge" data-index="${index}">削除</button>
+            </div>
         `;
         
+        // カード本体タップで選択
         badge.addEventListener('click', (e) => {
-            if (e.target.className === 'btn-del-badge') return;
+            if (e.target.tagName === 'BUTTON') return; // ボタンタップ時は無視
             selectRoute(key);
         });
         
+        // 🔼 ボタン（上へ移動）
+        badge.querySelector('.btn-move-up').addEventListener('click', (e) => {
+            e.stopPropagation();
+            moveRouteOrder(index, -1);
+        });
+        
+        // 🔽 ボタン（下へ移動）
+        badge.querySelector('.btn-move-down').addEventListener('click', (e) => {
+            e.stopPropagation();
+            moveRouteOrder(index, 1);
+        });
+        
+        // 削除ボタン
         badge.querySelector('.btn-del-badge').addEventListener('click', (e) => {
             e.stopPropagation();
             removeRoute(index);
@@ -92,6 +111,23 @@ function renderPreRegisteredList() {
     } else {
         currentSelectedTargetSpan.innerText = "（上のリストから選んでください）";
     }
+}
+
+// 💡【新機能】リストの並び順を入れ替える処理
+function moveRouteOrder(index, direction) {
+    const targetIndex = index + direction;
+    // 範囲外なら何もしない
+    if (targetIndex < 0 || targetIndex >= preRegisteredRoutes.length) return;
+    
+    // 要素を入れ替え
+    const temp = preRegisteredRoutes[index];
+    preRegisteredRoutes[index] = preRegisteredRoutes[targetIndex];
+    preRegisteredRoutes[targetIndex] = temp;
+    
+    // 保存して再描画
+    localStorage.setItem('nippo_pre_routes', JSON.stringify(preRegisteredRoutes));
+    renderPreRegisteredList();
+    statusMessage.innerText = "ルートの順序を変更しました。";
 }
 
 function selectRoute(key) {
@@ -113,7 +149,6 @@ function removeRoute(index) {
     renderPreRegisteredList();
 }
 
-// 💡 行先追加（件数チェックを取り払い、無限に登録できるよう解放しました）
 btnAddRoute.addEventListener('click', () => {
     const comp = companyInput.value.trim();
     const shop = shopInput.value.trim() || "本店";
@@ -136,6 +171,27 @@ btnAddRoute.addEventListener('click', () => {
     renderPreRegisteredList();
     companyInput.focus(); 
 });
+
+function advanceToNextRoute() {
+    if (preRegisteredRoutes.length === 0 || !activeRouteKey) return;
+
+    const currentIndex = preRegisteredRoutes.findIndex(r => (r.company + "_" + r.shop) === activeRouteKey);
+    
+    if (currentIndex !== -1 && currentIndex + 1 < preRegisteredRoutes.length) {
+        const nextRoute = preRegisteredRoutes[currentIndex + 1];
+        const nextKey = nextRoute.company + "_" + nextRoute.shop;
+        
+        setTimeout(() => {
+            selectRoute(nextKey);
+            statusMessage.innerText = `前の現場を出発しました。次は「${nextRoute.company}」に自動セットされました。`;
+        }, 1000);
+    } else {
+        setTimeout(() => {
+            statusMessage.innerText = "すべての予定行先が終了しました！到着メーターを入力してください。";
+            meterEndInput.focus(); 
+        }, 1000);
+    }
+}
 
 function refreshDisplayGrid() {
     let printContainer = document.getElementById('print-table-container');
@@ -238,9 +294,17 @@ function processActionImmediate(timeKey) {
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(postData)
     }).then(res => {
-        if (res.ok) statusMessage.innerText = `${compVal}の「${timeKey}」をシートへ同期しました！`;
+        if (res.ok) {
+            statusMessage.innerText = `${compVal}の「${timeKey === 'arrivalTime' ? '出発' : '到着'}」をシートへ同期しました！`;
+            if (timeKey === 'arrivalTime') {
+                advanceToNextRoute();
+            }
+        }
     }).catch(err => {
         statusMessage.innerText = "【オフライン保存中】データは安全です。";
+        if (timeKey === 'arrivalTime') {
+            advanceToNextRoute();
+        }
     });
 }
 
