@@ -38,6 +38,14 @@ hr {
     margin: 15px 0;
 }
 
+.section-box {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+}
+
 /* ==========================================
    ステータス表示
 ========================================== */
@@ -59,6 +67,10 @@ hr {
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
 }
 
 .form-group {
@@ -90,13 +102,71 @@ input[type="number"] {
     border-radius: 6px;
     outline: none;
     -webkit-appearance: none;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
-input[type="text"]:focus,
-input[type="number"]:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-    background-color: #ffffff !important;
+/* 💡 ポップアップ強調（現在フォーカスされている入力欄をパッと目立たせる） */
+input:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.25) !important;
+    background-color: #fffde6 !important; /* ほんのり黄色にして入力箇所を強調 */
+}
+
+/* 行先追加ボタン */
+.btn-add-route {
+    width: 100%;
+    padding: 12px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 事前入力された行先のバッジリスト */
+#pre-registered-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.route-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.route-badge.selected {
+    border-color: #ff9800;
+    background: #fff8e1;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.3);
+}
+
+.route-badge .text {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.route-badge .btn-del-badge {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
 }
 
 /* ==========================================
@@ -108,7 +178,6 @@ input[type="number"]:focus {
     width: 100%;
 }
 
-/* 基本のボタン共通設定 */
 .btn {
     flex: 1;
     font-weight: bold;
@@ -126,19 +195,18 @@ input[type="number"]:focus {
     transform: scale(0.96);
 }
 
-/* 「市場発・市場着」は押しやすい標準サイズ */
 .btn-purple, .btn-darkgreen {
     padding: 16px 10px;
     font-size: 18px;
 }
 
-/* 💡【新設】「到着・出発」ボタンを2倍巨大化（高さを倍にして文字も特大に） */
+/* 到着・出発ボタン（2倍サイズ） */
 .btn-blue, .btn-green {
-    padding: 32px 10px !important; /* 💡縦の厚みを2倍（16px → 32px）に拡大！ */
-    font-size: 24px !important;    /* 💡文字サイズを特大（18px → 24px）に拡大！ */
-    letter-spacing: 2px;           /* 文字の間隔を少し広げて見やすく */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* 文字をくっきり浮き立たせる */
-    box-shadow: 0 6px 10px rgba(0,0,0,0.2);  /* 存在感を出すために影を強く */
+    padding: 32px 10px !important;
+    font-size: 24px !important;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.2);
 }
 
 .btn-purple    { background-color: #6f42c1; }
@@ -186,7 +254,7 @@ input[type="number"]:focus {
 @media print {
     body { background-color: white; color: black; padding: 0; }
     .app-container { box-shadow: none; padding: 0; max-width: 100%; }
-    h2, .status, .form-row, label, input, hr, .btn-grid, .btn, .history-section { display: none !important; }
+    h2, .status, .section-box, label, input, hr, .btn-grid, .btn, .history-section, .btn-add-route, #pre-registered-list { display: none !important; }
     #print-table-container { display: block !important; width: 100%; }
     .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
     .print-table th, .print-table td { border: 1px solid black; padding: 6px 4px; text-align: center; }
