@@ -26,53 +26,70 @@
         
         <div class="status" id="status-message">データを読み込み中...</div>
 
-        <div class="form-row">
-            <div class="form-group flex-1">
-                <label>運転手名</label>
-                <input type="text" id="driver" list="driver-list" placeholder="選択または入力" autocomplete="off">
-                <datalist id="driver-list"></datalist>
+        <div class="section-box" id="sec-basic">
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>1. 運転手名</label>
+                    <input type="text" id="driver" list="driver-list" placeholder="選択または入力" autocomplete="off">
+                    <datalist id="driver-list"></datalist>
+                </div>
+                <div class="form-group flex-1">
+                    <label>2. 車番</label>
+                    <input type="text" id="car-number" list="car-list" placeholder="選択または入力" autocomplete="off">
+                    <datalist id="car-list"></datalist>
+                </div>
             </div>
-            <div class="form-group flex-1">
-                <label>車番</label>
-                <input type="text" id="car-number" list="car-list" placeholder="選択または入力" autocomplete="off">
-                <datalist id="car-list"></datalist>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group flex-1">
-                <label>出発時メーター (km)</label>
-                <input type="number" id="meter-start" placeholder="例: 12345" inputmode="numeric">
-            </div>
-            <div class="form-group flex-1">
-                <label>到着時メーター (km)</label>
-                <input type="number" id="meter-end" placeholder="例: 12450" inputmode="numeric">
+            
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>3. 出発時メーター (km)</label>
+                    <input type="number" id="meter-start" placeholder="例: 12345" inputmode="numeric">
+                </div>
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group flex-1">
-                <label>会社名</label>
-                <input type="text" id="company" list="company-list" placeholder="会社名を入力" autocomplete="off">
-                <datalist id="company-list"></datalist>
+        <div class="section-box" id="sec-route-registration">
+            <h4 style="margin-bottom: 8px; color: #555; font-size: 14px;">4. 本日の行先をあらかじめ登録 (最大5件)</h4>
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>会社名</label>
+                    <input type="text" id="company" list="company-list" placeholder="会社名を入力" autocomplete="off">
+                    <datalist id="company-list"></datalist>
+                </div>
+                <div class="form-group flex-1">
+                    <label>店舗名</label>
+                    <input type="text" id="shop" list="shop-list" placeholder="店舗名を入力" autocomplete="off">
+                    <datalist id="shop-list"></datalist>
+                </div>
             </div>
-            <div class="form-group flex-1">
-                <label>店舗名</label>
-                <input type="text" id="shop" list="shop-list" placeholder="店舗名を入力" autocomplete="off">
-                <datalist id="shop-list"></datalist>
+            <button class="btn-add-route" id="btn-add-route">+ 行先をリストに追加</button>
+            
+            <div id="pre-registered-list"></div>
+        </div>
+
+        <div class="section-box" id="sec-operation-buttons" style="border-top: 2px dashed #007bff; padding-top: 15px;">
+            <div style="font-size: 13px; font-weight: bold; color: #007bff; margin-bottom: 8px;">
+                現在の選択中の行先: <span id="current-selected-target" style="font-size: 16px; color: #111; background: #fff3cd; padding: 2px 6px; border-radius: 4px;">（上のリストから選んでください）</span>
+            </div>
+            
+            <div class="btn-grid">
+                <button class="btn btn-purple" id="btn-co-departure">市場 発</button>
+                <button class="btn btn-darkgreen" id="btn-co-arrival">市場 着</button>
+            </div>
+
+            <div class="btn-grid" style="margin-top: 15px;">
+                <button class="btn btn-blue" id="btn-departure">到着</button>
+                <button class="btn btn-green" id="btn-arrival">出発</button>
             </div>
         </div>
 
-        <hr>
-
-        <div class="btn-grid">
-            <button class="btn btn-purple" id="btn-co-departure">市場 発</button>
-            <button class="btn btn-darkgreen" id="btn-co-arrival">市場 着</button>
-        </div>
-
-        <div class="btn-grid" style="margin-top: 15px;">
-            <button class="btn btn-blue" id="btn-departure">到着</button>
-            <button class="btn btn-green" id="btn-arrival">出発</button>
+        <div class="section-box" id="sec-end">
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>5. 到着時メーター (km) ※一日の終わりに記入</label>
+                    <input type="number" id="meter-end" placeholder="例: 12450" inputmode="numeric">
+                </div>
+            </div>
         </div>
 
         <button class="btn btn-gray" id="btn-print">日報を印刷・PDF化</button>
@@ -88,4 +105,4 @@
 
     <script src="app.js"></script>
 </body>
-</html>
+</html>S
