@@ -105,11 +105,10 @@ input[type="number"] {
     transition: border-color 0.2s, background-color 0.2s;
 }
 
-/* 💡 ポップアップ強調（現在フォーカスされている入力欄をパッと目立たせる） */
 input:focus {
     border-color: #007bff !important;
     box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.25) !important;
-    background-color: #fffde6 !important; /* ほんのり黄色にして入力箇所を強調 */
+    background-color: #fffde6 !important;
 }
 
 /* 行先追加ボタン */
@@ -127,12 +126,16 @@ input:focus {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* 事前入力された行先のバッジリスト */
+/* 💡 行先登録リスト（増えたらスクロールする無限対応設定） */
 #pre-registered-list {
     margin-top: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 260px;    /* 💡 件数が増えても画面を突き破らない高さ */
+    overflow-y: auto;     /* 💡 はみ出た分は枠内でスクロール */
+    padding-right: 4px;
+    border-radius: 4px;
 }
 
 .route-badge {
@@ -163,9 +166,10 @@ input:focus {
     background: #ef4444;
     color: white;
     border: none;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 4px;
     font-size: 11px;
+    font-weight: bold;
     cursor: pointer;
 }
 
@@ -200,7 +204,6 @@ input:focus {
     font-size: 18px;
 }
 
-/* 到着・出発ボタン（2倍サイズ） */
 .btn-blue, .btn-green {
     padding: 32px 10px !important;
     font-size: 24px !important;

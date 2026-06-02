@@ -53,17 +53,11 @@ function updateDatalist(element, list) {
     });
 }
 
-// 💡 ポップアップフォーカス連動システム
 function setupPopupSequence() {
-    // 1. 運転手名を選んだら ➔ 車番へポップアップ
     driverInput.addEventListener('change', () => { if(driverInput.value) carInput.focus(); });
-    // 2. 車番を選んだら ➔ 出発メーターへポップアップ
     carInput.addEventListener('change', () => { if(carInput.value) meterStartInput.focus(); });
-    // 3. 出発メーターを入力してEnter ➔ 会社名へポップアップ
     meterStartInput.addEventListener('keydown', (e) => { if(e.key === 'Enter' && meterStartInput.value) companyInput.focus(); });
-    // 4. 会社名を入力・選択したら ➔ 店舗名へポップアップ
     companyInput.addEventListener('change', () => { if(companyInput.value) shopInput.focus(); });
-    // 5. 店舗名を入力してEnter ➔ 自動で行先リストに追加ボタンへフォーカス
     shopInput.addEventListener('keydown', (e) => { if(e.key === 'Enter' && shopInput.value) btnAddRoute.focus(); });
 }
 
@@ -104,7 +98,7 @@ function selectRoute(key) {
     activeRouteKey = key;
     localStorage.setItem('nippo_active_route_key', activeRouteKey);
     renderPreRegisteredList();
-    statusMessage.innerText = "ターゲット行先を切り替えました。ボタンを押せます。";
+    statusMessage.innerText = "ターゲット行先を切り替えました。";
 }
 
 function removeRoute(index) {
@@ -119,15 +113,13 @@ function removeRoute(index) {
     renderPreRegisteredList();
 }
 
-// 行先追加ボタンが押されたとき
+// 💡 行先追加（件数チェックを取り払い、無限に登録できるよう解放しました）
 btnAddRoute.addEventListener('click', () => {
     const comp = companyInput.value.trim();
     const shop = shopInput.value.trim() || "本店";
     
     if (!comp) { alert("会社名を入力してください。"); companyInput.focus(); return; }
-    if (preRegisteredRoutes.length >= 5) { alert("一度に登録できる行先は5件までです。"); return; }
     
-    // 重複チェック
     const isDuplicate = preRegisteredRoutes.some(r => r.company === comp && r.shop === shop);
     if (!isDuplicate) {
         preRegisteredRoutes.push({ company: comp, shop: shop });
@@ -138,12 +130,11 @@ btnAddRoute.addEventListener('click', () => {
     if (!activeRouteKey) activeRouteKey = newKey;
     localStorage.setItem('nippo_active_route_key', activeRouteKey);
     
-    // 入力欄をクリアして次の入力をしやすくする
     companyInput.value = "";
     shopInput.value = "";
     
     renderPreRegisteredList();
-    companyInput.focus(); // 続けて次の会社を入力できるようにポップアップフォーカス
+    companyInput.focus(); 
 });
 
 function refreshDisplayGrid() {
