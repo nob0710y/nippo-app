@@ -168,7 +168,7 @@ input:focus {
     white-space: nowrap;
 }
 
-/* 💡 順序決定・削除のミニボタン群 */
+/* 順序変更・削除のミニボタン群 */
 .badge-actions {
     display: flex;
     gap: 4px;
@@ -243,19 +243,21 @@ input:focus {
 #history-box {
     max-height: 220px;
     overflow-y: auto;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
     padding: 10px;
     background-color: #fafafa;
 }
 
+/* 💡 履歴カードの全体的なフォントサイズを「市場運行管理」と統一 */
 .history-card {
     background: white;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #cbd5e1;
     border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 8px;
+    margin-bottom: 8px;
+    font-size: 13px; /* 統一サイズ */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .history-card:last-child {

@@ -26,12 +26,10 @@ const btnAddRoute = document.getElementById('btn-add-route');
 const preRegisteredListDiv = document.getElementById('pre-registered-list');
 const currentSelectedTargetSpan = document.getElementById('current-selected-target');
 
-// ローカル保存データの構造を整理
 let localHistoryMap = JSON.parse(localStorage.getItem('nippo_local_history')) || {};
 let preRegisteredRoutes = JSON.parse(localStorage.getItem('nippo_pre_routes')) || [];
 let activeRouteKey = localStorage.getItem('nippo_active_route_key') || "";
 
-// 💡 市場発着・メーターなどの全体共通データを管理するオブジェクト
 let globalDailyInfo = JSON.parse(localStorage.getItem('nippo_global_daily')) || {
     companyDepartureTime: "",
     companyArrivalTime: "",
@@ -193,7 +191,7 @@ function advanceToNextRoute() {
     }
 }
 
-// 💡 履歴と印刷表示のロジックを「市場発着独立型」に再構築
+// 💡 履歴表示のテキストサイズ・レイアウトをスリム化（13pxに統一）
 function refreshDisplayGrid() {
     let printContainer = document.getElementById('print-table-container');
     if (!printContainer) {
@@ -202,18 +200,16 @@ function refreshDisplayGrid() {
         document.querySelector('.app-container').appendChild(printContainer);
     }
 
-    // 画面のインプットへ同期保存値を反映
     if (globalDailyInfo.meterStart && !meterStartInput.value) meterStartInput.value = globalDailyInfo.meterStart;
     if (globalDailyInfo.meterEnd && !meterEndInput.value) meterEndInput.value = globalDailyInfo.meterEnd;
 
     const keys = Object.keys(localHistoryMap);
     
-    // 履歴ボックスの上部に「市場発着」のステータスを独立して表示
     const coDepTimeDisp = formatShortTime(globalDailyInfo.companyDepartureTime);
     const coArrTimeDisp = formatShortTime(globalDailyInfo.companyArrivalTime);
     
     let historyHeaderHtml = `
-        <div style="background: #eef2f7; padding: 8px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; border: 1px solid #cbd5e1;">
+        <div style="background: #eef2f7; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 13px; border: 1px solid #cbd5e1; line-height: 1.5;">
             <strong>【市場運行管理】</strong><br>
             市場発：<span style="color:#6f42c1; font-weight:bold;">${coDepTimeDisp}</span> ｜ 
             市場着：<span style="color:#1e7e34; font-weight:bold;">${coArrTimeDisp}</span><br>
@@ -222,14 +218,13 @@ function refreshDisplayGrid() {
     `;
 
     if (keys.length === 0) {
-        historyBox.innerHTML = historyHeaderHtml + "<p style='color:#999; padding: 5px;'>配達の履歴はまだありません。</p>";
+        historyBox.innerHTML = historyHeaderHtml + "<p style='color:#999; padding: 5px; font-size: 13px;'>配達の履歴はまだありません。</p>";
         printContainer.innerHTML = "<p>印刷するデータがありません。</p>";
         return;
     }
 
     historyBox.innerHTML = historyHeaderHtml;
     
-    // 印刷用テーブル
     let tableHtml = `<table class="print-table"><thead><tr><th>日付</th><th>乗務員</th><th>車番</th><th>行先</th><th>到着</th><th>出発</th><th>市場発</th><th>市場着</th><th>開始</th><th>終了</th></tr></thead><tbody>`;
 
     keys.forEach((mapKey, idx) => {
@@ -244,17 +239,19 @@ function refreshDisplayGrid() {
             if (dateParts.length >= 3) displayDate = `${dateParts[1]}-${dateParts[2]}`;
         }
 
-        // 店舗ごとのスッキリした履歴カード
+        // 💡 巨大だった「到着・出発」の文字を13pxにスリム化し、1行でスッキリ表示
         const card = document.createElement('div');
         card.className = 'history-card';
         card.innerHTML = `
-            <div style="color: #666; font-size: 11px;">乗務: <strong>${item.driver}</strong> ｜ 車番: <strong>${item.carNumber}</strong></div>
-            <div style="font-size: 14px; font-weight: bold; color: #333;">行先: ${item.company} ${item.shop}</div>
-            <div style="font-size: 24px; font-weight: bold; color: #222;">到着: <span style="color:#007bff;">${arrivalTime}</span> ｜ 出発: <span style="color:#28a745;">${departureTime}</span></div>
+            <div style="font-weight: bold; color: #111; margin-bottom: 2px;">【配達】${item.company} (${item.shop})</div>
+            <div style="line-height: 1.4; color: #444;">
+                到着：<span style="color:#007bff; font-weight:bold;">${arrivalTime}</span> ｜ 
+                出発：<span style="color:#28a745; font-weight:bold;">${departureTime}</span>
+                <span style="color: #777; font-size: 11px; float: right;">${item.driver} / ${item.carNumber}</span>
+            </div>
         `;
         historyBox.appendChild(card);
 
-        // 印刷時には、1行目に代表して全体の市場発着・メーターを出力する仕様
         const pCoDep = (idx === 0) ? coDepTimeDisp : "";
         const pCoArr = (idx === 0) ? coArrTimeDisp : "";
         const pMStart = (idx === 0) ? (globalDailyInfo.meterStart || "") : "";
@@ -267,7 +264,6 @@ function refreshDisplayGrid() {
     printContainer.innerHTML = tableHtml;
 }
 
-// 💡 市場発・市場着の独立処理関数
 function processMarketAction(marketKey) {
     const dVal = driverInput.value.trim();
     const cVal = carInput.value.trim();
@@ -280,7 +276,6 @@ function processMarketAction(marketKey) {
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    // グローバル情報を更新
     globalDailyInfo[marketKey] = currentShortTime;
     if (mStartVal) globalDailyInfo.meterStart = mStartVal;
     if (mEndVal) globalDailyInfo.meterEnd = mEndVal;
@@ -288,7 +283,6 @@ function processMarketAction(marketKey) {
 
     refreshDisplayGrid();
 
-    // スプレッドシート送信用データ（行先は「市場」として送信）
     const postData = {
         date: dateStr, 
         driver: dVal, carNumber: cVal, 
@@ -314,7 +308,6 @@ function processMarketAction(marketKey) {
     });
 }
 
-// 店舗ごとの「到着」「出発」処理関数
 function processActionImmediate(timeKey) {
     if (!activeRouteKey) { alert("行先リストから、今から稼働する目的地をタップして選択してください。"); return; }
     
@@ -344,7 +337,6 @@ function processActionImmediate(timeKey) {
     localHistoryMap[activeRouteKey].driver = dVal;
     localHistoryMap[activeRouteKey].carNumber = cVal;
 
-    // 最新のメーター情報があれば全体共通領域にも同期
     if (mStartVal) globalDailyInfo.meterStart = mStartVal;
     if (mEndVal) globalDailyInfo.meterEnd = mEndVal;
     localStorage.setItem('nippo_global_daily', JSON.stringify(globalDailyInfo));
@@ -416,7 +408,6 @@ companyInput.addEventListener('input', () => {
     }
 });
 
-// メーターの手動変更も記憶領域にリアルタイム保存
 meterStartInput.addEventListener('input', () => {
     globalDailyInfo.meterStart = meterStartInput.value;
     localStorage.setItem('nippo_global_daily', JSON.stringify(globalDailyInfo));
@@ -442,11 +433,8 @@ btnClearHistory.addEventListener('click', () => {
     }
 });
 
-// 💡 市場ボタンには専用の独立関数を割り当て
 btnCoDeparture.addEventListener('click', () => { processMarketAction('companyDepartureTime'); });
 btnCoArrival.addEventListener('click', () => { processMarketAction('companyArrivalTime'); });
-
-// 店舗ボタンは今まで通り
 btnDeparture.addEventListener('click', () => { processActionImmediate('departureTime'); });
 btnArrival.addEventListener('click', () => { processActionImmediate('arrivalTime'); });
 btnPrint.addEventListener('click', () => { window.print(); });
