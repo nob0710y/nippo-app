@@ -191,7 +191,7 @@ function advanceToNextRoute() {
     }
 }
 
-// 💡 履歴表示のテキストサイズ・レイアウトをスリム化（13pxに統一）
+// 💡 印刷時に「市場管理情報」を別枠にする修正
 function refreshDisplayGrid() {
     let printContainer = document.getElementById('print-table-container');
     if (!printContainer) {
@@ -208,6 +208,7 @@ function refreshDisplayGrid() {
     const coDepTimeDisp = formatShortTime(globalDailyInfo.companyDepartureTime);
     const coArrTimeDisp = formatShortTime(globalDailyInfo.companyArrivalTime);
     
+    // スマホ画面上の【市場運行管理】ボックス
     let historyHeaderHtml = `
         <div style="background: #eef2f7; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 13px; border: 1px solid #cbd5e1; line-height: 1.5;">
             <strong>【市場運行管理】</strong><br>
@@ -224,22 +225,57 @@ function refreshDisplayGrid() {
     }
 
     historyBox.innerHTML = historyHeaderHtml;
+
+    // 共通で使うドライバー、車番、日付情報を取得
+    let firstItem = localHistoryMap[keys[0]] || {};
+    let printDriver = firstItem.driver || driverInput.value.trim() || "-";
+    let printCar = firstItem.carNumber || carInput.value.trim() || "-";
     
-    let tableHtml = `<table class="print-table"><thead><tr><th>日付</th><th>乗務員</th><th>車番</th><th>行先</th><th>到着</th><th>出発</th><th>市場発</th><th>市場着</th><th>開始</th><th>終了</th></tr></thead><tbody>`;
+    let displayDate = "-";
+    if (firstItem.date) {
+        const onlyDate = firstItem.date.replace('T', ' ').split(' ')[0];
+        const dateParts = onlyDate.split('-');
+        if (dateParts.length >= 3) displayDate = `${dateParts[0]}/${dateParts[1]}/${dateParts[2]}`;
+    } else {
+        const today = new Date();
+        displayDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+    }
+
+    // 💡 【印刷用別枠】市場情報ヘッダーテーブル
+    let printHtml = `
+        <h2 style="text-align:center; margin-bottom:10px; font-size:18px;">運行管理日報</h2>
+        <table class="print-info-header">
+            <tr>
+                <td class="label">運行日</td><td>${displayDate}</td>
+                <td class="label">乗務員</td><td>${printDriver}</td>
+                <td class="label">車番</td><td>${printCar}</td>
+            </tr>
+            <tr>
+                <td class="label">市場出発</td><td style="font-weight:bold;">${coDepTimeDisp}</td>
+                <td class="label">市場帰着</td><td style="font-weight:bold;">${coArrTimeDisp}</td>
+                <td class="label">メーター</td><td>${globalDailyInfo.meterStart || "--"} km ～ ${globalDailyInfo.meterEnd || "--"} km</td>
+            </tr>
+        </table>
+        
+        <h3 style="font-size:13px; margin: 10px 0 5px 0;">■ 配達運行記録</h3>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%;">項番</th>
+                    <th>行先（会社名・店舗名）</th>
+                    <th style="width: 25%;">到着時刻</th>
+                    <th style="width: 25%;">出発時刻</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
 
     keys.forEach((mapKey, idx) => {
         const item = localHistoryMap[mapKey];
-        const arrivalTime = formatShortTime(item.departureTime);
-        const departureTime = formatShortTime(item.arrivalTime);
+        const arrivalTime = formatShortTime(item.departureTime); // 到着
+        const departureTime = formatShortTime(item.arrivalTime); // 出発
 
-        let displayDate = "-";
-        if (item.date) {
-            const onlyDate = item.date.replace('T', ' ').split(' ')[0];
-            const dateParts = onlyDate.split('-');
-            if (dateParts.length >= 3) displayDate = `${dateParts[1]}-${dateParts[2]}`;
-        }
-
-        // 💡 巨大だった「到着・出発」の文字を13pxにスリム化し、1行でスッキリ表示
+        // スマホ画面用のリスト表示（13pxスリム版）
         const card = document.createElement('div');
         card.className = 'history-card';
         card.innerHTML = `
@@ -252,16 +288,19 @@ function refreshDisplayGrid() {
         `;
         historyBox.appendChild(card);
 
-        const pCoDep = (idx === 0) ? coDepTimeDisp : "";
-        const pCoArr = (idx === 0) ? coArrTimeDisp : "";
-        const pMStart = (idx === 0) ? (globalDailyInfo.meterStart || "") : "";
-        const pMEnd = (idx === 0) ? (globalDailyInfo.meterEnd || "") : "";
-
-        tableHtml += `<tr><td>${displayDate}</td><td>${item.driver}</td><td>${item.carNumber}</td><td>${item.company} ${item.shop}</td><td>${arrivalTime}</td><td>${departureTime}</td><td>${pCoDep}</td><td>${pCoArr}</td><td>${pMStart}</td><td>${pMEnd}</td></tr>`;
+        // 💡 【印刷用表】純粋な配達記録だけを行として追加
+        printHtml += `
+            <tr>
+                <td>${idx + 1}</td>
+                <td style="text-align:left; padding-left:8px;">${item.company} ${item.shop}</td>
+                <td style="color:#007bff; font-weight:bold;">${arrivalTime}</td>
+                <td style="color:#28a745; font-weight:bold;">${departureTime}</td>
+            </tr>
+        `;
     });
 
-    tableHtml += `</tbody></table>`;
-    printContainer.innerHTML = tableHtml;
+    printHtml += `</tbody></table>`;
+    printContainer.innerHTML = printHtml;
 }
 
 function processMarketAction(marketKey) {

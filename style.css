@@ -184,9 +184,9 @@ input:focus {
     cursor: pointer;
 }
 
-.btn-move-up   { background-color: #17a2b8; } /* 水色 */
-.btn-move-down { background-color: #6c757d; } /* 灰色 */
-.btn-del-badge { background-color: #ef4444; } /* 赤色 */
+.btn-move-up   { background-color: #17a2b8; }
+.btn-move-down { background-color: #6c757d; }
+.btn-del-badge { background-color: #ef4444; }
 
 /* ==========================================
    ボタン関係
@@ -249,14 +249,13 @@ input:focus {
     background-color: #fafafa;
 }
 
-/* 💡 履歴カードの全体的なフォントサイズを「市場運行管理」と統一 */
 .history-card {
     background: white;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     padding: 8px;
     margin-bottom: 8px;
-    font-size: 13px; /* 統一サイズ */
+    font-size: 13px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
@@ -265,7 +264,7 @@ input:focus {
 }
 
 /* ==========================================
-   印刷用設定（変更なし）
+   印刷用設定（市場情報を別枠化）
 ========================================== */
 #print-table-container {
     display: none;
@@ -274,10 +273,51 @@ input:focus {
 @media print {
     body { background-color: white; color: black; padding: 0; }
     .app-container { box-shadow: none; padding: 0; max-width: 100%; }
-    h2, .status, .section-box, label, input, hr, .btn-grid, .btn, .history-section, .btn-add-route, #pre-registered-list { display: none !important; }
-    #print-table-container { display: block !important; width: 100%; }
-    .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-    .print-table th, .print-table td { border: 1px solid black; padding: 6px 4px; text-align: center; }
-    .print-table th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .print-table td.left-align { text-align: left; }
+    
+    /* 入力フォームやスマホ用ボタンを全て非表示 */
+    h2, .status, .section-box, label, input, hr, .btn-grid, .btn, .history-section, .btn-add-route, #pre-registered-list { 
+        display: none !important; 
+    }
+    
+    /* 印刷用コンテナを表示 */
+    #print-table-container { 
+        display: block !important; 
+        width: 100%; 
+    }
+    
+    /* 市場の管理情報（別枠ヘッド） */
+    .print-info-header {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        font-size: 12px;
+    }
+    .print-info-header td {
+        border: 1px solid black;
+        padding: 6px 8px;
+        background-color: #ffffff;
+    }
+    .print-info-header td.label {
+        background-color: #f2f2f2 !important;
+        font-weight: bold;
+        text-align: center;
+        width: 15%;
+    }
+    
+    /* 店舗の配達記録テーブル */
+    .print-table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 12px; 
+    }
+    .print-table th, .print-table td { 
+        border: 1px solid black; 
+        padding: 6px 4px; 
+        text-align: center; 
+    }
+    .print-table th { 
+        background-color: #f2f2f2 !important; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+    }
 }
